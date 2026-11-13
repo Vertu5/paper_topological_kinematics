@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this code or these results, please cite them as below."
+title: "Recovering a Taxonomy of Collective Behaviors from Motion Alone: code and derived results"
+authors:
+  - family-names: "Ndinga Oba"
+    given-names: "Olivier Vertu"
+    affiliation: "Université libre de Bruxelles"
+    orcid: "https://orcid.org/0009-0001-3422-2846"
+doi: "10.5281/zenodo.23440748"
+license:
+  - MIT
+  - CC-BY-4.0
+repository-code: "https://github.com/Vertu5/paper_topological_kinematics"
+date-released: "2026-10-22"
+keywords:
+  - swarm robotics
+  - topological data analysis
+  - similarity network fusion
+  - affinity propagation
+  - unsupervised behavior discovery
+references:
+  - type: thesis
+    title: "Imitation of Swarm Behaviors with Topological Data Analysis in AutoMoDe-Chocolate and IRACE"
+    authors:
+      - family-names: "Ndinga Oba"
+        given-names: "Olivier Vertu"
+    institution:
+      name: "Université libre de Bruxelles"
+    year: 2025
+    doi: "10.5281/zenodo.18878269"

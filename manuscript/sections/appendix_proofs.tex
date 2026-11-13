@@ -1,0 +1,131 @@
+% ============================================================================
+\section{Proofs and verification}
+\label{app:proofs}
+
+This appendix proves that the closed forms \eqref{eq:potentials} solve the Helmholtz--Hodge decomposition, proves the
+two other propositions and gives the closed forms that the code evaluates.
+
+\begin{proposition}[Closed-form Helmholtz--Hodge potentials]\label{prop:hhd}
+For a single agent, $\nabla\big(u\,\kappa_\sigma(\vd)\big)-\nabla^{\perp}\big(w\,\kappa_\sigma(\vd)\big)
+=\vv\,e^{-\|\vd\|^2/2\sigma^2}$ at every $\vd\neq\vec 0$. Consequently the potentials \eqref{eq:potentials} satisfy,
+at every point $\vr$,
+\[
+\nabla\varphi_\sigma+\nabla^{\perp}\psi_\sigma=\frac{1}{NT\sigma\vbar}\sum_{t}\vV_\sigma(\vr,t).
+\]
+\end{proposition}
+
+\begin{proof}[Proof of \cref{prop:hhd}]
+The idea is to invert the Laplacian on the flux of one agent, that is, to solve the Poisson equation of the plane
+for a vector field. The solution is then split into a gradient and a rotated gradient, and the two potentials are
+the scalar fields that appear in this split.
+
+Consider one agent at the origin, with a constant velocity $\vv$, and write $\varrho=\|\vd\|$ for the
+distance to it. Its contribution to the flux is $\vv\,e^{-\varrho^2/2\sigma^2}$, a Gaussian bump carried in
+the direction of $\vv$. We first look for a radial function $\Gamma(\varrho)$ whose Laplacian is this
+Gaussian, up to a factor $1/\sigma^2$. For a radial function, the Laplacian reads
+$\Delta\Gamma=\varrho^{-1}(\varrho\Gamma')'$. Integrating from the origin, where $\Gamma$ must stay smooth, gives
+\[
+\varrho\,\Gamma'(\varrho)=\int_0^{\varrho}\frac{s}{\sigma^2}\,e^{-s^2/2\sigma^2}\,\mathrm{d}s=1-e^{-\varrho^2/2\sigma^2},
+\]
+which gives
+\[
+\Delta\Gamma=\frac{1}{\varrho}\,\frac{\mathrm{d}}{\mathrm{d}\varrho}\Big(1-e^{-\varrho^2/2\sigma^2}\Big)
+=\frac{1}{\sigma^2}\,e^{-\varrho^2/2\sigma^2}.
+\]
+Far from the agent, $\Gamma'\simeq1/\varrho$, so $\Gamma$ grows like the logarithm of the distance, as the free-space
+Green's function of the plane does \citep{bhatia2014natural}. Near the agent, the Gaussian smooths it.
+Compared with \eqref{eq:kappa}, this choice reads $\sigma^2\Gamma'(\varrho)=\varrho\,\kappa_\sigma(\varrho)$:
+the kernel $\kappa_\sigma$ is $\sigma^2$ times the radial derivative of $\Gamma$, divided by the
+distance.
+
+Second, every smooth vector field $\vW=(W_x,W_y)$ of the plane satisfies
+\[
+\Delta\vW=\nabla(\nabla\!\cdot\vW)+\nabla^{\perp}(\nabla^{\perp}\!\cdot\vW),\qquad
+\nabla^{\perp}\!\cdot\vW=\partial_xW_y-\partial_yW_x,
+\]
+as the expansion of both sides component by component shows. We apply this identity to
+$\vW=\sigma^2\Gamma\,\vv$. Since $\vv$ is constant, $\Delta\vW=\sigma^2(\Delta\Gamma)\,\vv=\vv\,e^{-\varrho^2/2\sigma^2}$,
+which is the contribution of the agent. The identity splits it into the gradient of
+$\Phi=\nabla\!\cdot\vW=\sigma^2\,\vv\cdot\nabla\Gamma$ and the rotated gradient of
+$\Psi=\nabla^{\perp}\!\cdot\vW=\sigma^2\big(v_y\,\partial_x\Gamma-v_x\,\partial_y\Gamma\big)$:
+\[
+\vv\,e^{-\varrho^2/2\sigma^2}=\nabla\Phi+\nabla^{\perp}\Psi .
+\]
+
+Third, we write $\Phi$ and $\Psi$ with the kernel. The gradient of a radial function points along $\vd$,
+and $\sigma^2\nabla\Gamma=\sigma^2\Gamma'(\varrho)\,\vd/\varrho=\kappa_\sigma(\vd)\,\vd$. Hence
+$\Phi=\kappa_\sigma(\vd)\,(\vv\cdot\vd)=u\,\kappa_\sigma(\vd)$ and
+$\Psi=\kappa_\sigma(\vd)\,(v_yd_x-v_xd_y)=-w\,\kappa_\sigma(\vd)$, which is the single-agent identity of the
+proposition. The computation holds wherever $\vd\neq\vec 0$. At the agent itself both sides are smooth, and
+the identity follows by continuity.
+
+Finally, the identity is linear in the velocity. Summing it over the agents and the instants, with the
+factor $1/(NT\sigma\vbar)$, gives the potentials \eqref{eq:potentials} on the left and
+$\frac{1}{NT\sigma\vbar}\sum_t\vV_\sigma(\vr,t)$ on the right, since $\vV_\sigma=\sum_i\vv_iO_i$. The two
+potentials therefore rebuild the time-averaged flux exactly, without a grid and without a boundary
+condition.
+\end{proof}
+
+\begin{proposition}[Invariance]\label{prop:so2}
+Let a rigid transformation of the plane, a rotation $Q\in\mathrm{SO}(2)$ followed by a translation, act
+on all positions, on all velocities and on the evaluation point. Then $\rho_\sigma$, $K_\sigma$, $\varphi_\sigma$,
+$\psi_\sigma$ and $J_\sigma$ are unchanged, while $\nabla\varphi_\sigma$ and $\nabla\psi_\sigma$
+are multiplied by $Q$.
+\end{proposition}
+\begin{proof}
+Every field is built from a few elementary quantities: the distances $\|\vd_i\|$ between the point and
+the agents, the speeds $\|\vv_i\|$, the scalar products $u_i=\vv_i\cdot\vd_i$, the determinants
+$w_i=\det[\vv_i,\vd_i]$, and the averages $\vbar$ and $\overline{v^2}$. A translation changes neither $\vd_i$
+nor $\vv_i$. A common rotation preserves lengths, angles and the orientation of the plane, so it changes
+none of these quantities either. Hence $\rho_\sigma$, $K_\sigma$, $\varphi_\sigma$ and $\psi_\sigma$ take
+the same value at the transformed point, and their gradients turn with the scene: they are multiplied
+by $Q$. The coupling keeps its value, since a rotation does not change a determinant:
+$\det[Q\nabla\varphi_\sigma,Q\nabla\psi_\sigma]=\det Q\,\det[\nabla\varphi_\sigma,\nabla\psi_\sigma]
+=\det[\nabla\varphi_\sigma,\nabla\psi_\sigma]$, because $\det Q=1$.
+\end{proof}
+The seeds are selected from the agents and from the fields themselves, so the diagrams inherit this
+invariance, up to floating-point effects in the choice of the seeds, which \cref{app:invariance}
+measures.
+
+\begin{proposition}[Tail of the footprint]\label{prop:tail}
+For $O_i(\vr)=\exp(-\|\vr-\vx_i\|^2/2\sigma^2)$ and any $\varrho\ge0$,
+$\int_{\|\vr-\vx_i\|>\varrho}O_i(\vr)\,\mathrm{d}\vr=2\pi\sigma^2e^{-\varrho^2/2\sigma^2}$. At $\varrho=5\sigma$
+the fraction of the mass outside the evaluation window is $e^{-12.5}\approx3.7\times10^{-6}$.
+\end{proposition}
+\begin{proof}
+The footprint depends only on the distance $s=\|\vr-\vx_i\|$ to the agent, so we integrate in polar
+coordinates centered on it, where the element of area is $2\pi s\,\mathrm{d}s$:
+\[
+\int_{\|\vr-\vx_i\|>\varrho}O_i(\vr)\,\mathrm{d}\vr=\int_\varrho^\infty e^{-s^2/2\sigma^2}\,2\pi s\,\mathrm{d}s
+=2\pi\sigma^2\Big[-e^{-s^2/2\sigma^2}\Big]_{\varrho}^{\infty}=2\pi\sigma^2e^{-\varrho^2/2\sigma^2}.
+\]
+With $\varrho=0$ the whole mass is $2\pi\sigma^2$, so the fraction left outside a window of radius
+$\varrho$ is $e^{-\varrho^2/2\sigma^2}$. At $\varrho=5\sigma$ it is $e^{-25/2}=e^{-12.5}\approx3.7\times10^{-6}$.
+\end{proof}
+
+The coupling field needs the gradients of the two potentials. They follow from the same closed forms,
+by differentiating $u_i\kappa_\sigma(\vd_i)$ and $w_i\kappa_\sigma(\vd_i)$ with respect to the point. With
+$c=1/(NT\sigma\vbar)$, $\vv_i^{\perp}=(-v_{i,y},v_{i,x})$ and
+$\lambda_i=\big(e^{-\|\vd_i\|^2/2\sigma^2}-2\kappa_\sigma(\vd_i)\big)/\|\vd_i\|^2$,
+\[
+\nabla\varphi_\sigma=c\sum_{t,i}\big(\kappa_\sigma(\vd_i)\,\vv_i+\lambda_i\,u_i\,\vd_i\big),\qquad
+\nabla\psi_\sigma=-c\sum_{t,i}\big(\kappa_\sigma(\vd_i)\,\vv_i^{\perp}+\lambda_i\,w_i\,\vd_i\big).
+\]
+A seed taken from the agent positions coincides with an agent at some instant, so these expressions must remain
+accurate at $\vd_i=\vec 0$. Two details ensure it. The code computes $1-e^{-s}$ as $-\operatorname{expm1}(-s)$,
+which keeps the relative precision of $\kappa_\sigma$ as $\|\vd\|\to0$. It also floors $\|\vd\|^2$ at
+$10^{-12}$\,m$^2$, where $\kappa_\sigma$ equals $1/2$ to better than the single precision in which the
+fields are stored. The factor $\lambda_i$ tends to $-1/(4\sigma^2)$ as $\vd_i\to\vec 0$, but its numerator is
+the difference of two numbers close to one, which loses precision. It is multiplied by $u_i\,\vd_i$ or
+$w_i\,\vd_i$, of order $\|\vd_i\|^2$, so this loss does not reach the gradients. The derivatives with respect
+to the positions (\cref{sec:res_attribution}) are taken by automatic differentiation of the same
+expressions.
+
+Every statement of this appendix is also checked by computer. The script
+\nolinkurl{manuscript/verify_propositions.py} verifies with SymPy the single-agent identity of
+\cref{prop:hhd}, the orthogonality relations $\nabla\cdot\nabla^{\perp}\psi=0$ and
+$\nabla^{\perp}\cdot\nabla\varphi=0$, the invariance of the elementary terms of \cref{prop:so2}, and the
+tail of \cref{prop:tail}, which a numerical quadrature confirms to $\nm{tail-quad-err}$. It also checks
+the gradients above, the limit of $\lambda_i$ and their value at an agent, and the rotation invariance of
+the magnitude of the traceless part of $\tM_2$ (\cref{sec:representation}). On a synthetic milling group, it
+checks numerically the envelope property of \cref{app:attribution}.

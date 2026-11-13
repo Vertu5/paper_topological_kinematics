@@ -1,0 +1,166 @@
+% ============================================================================
+\section{The method in detail}
+\label{app:method}
+
+This appendix gives the details of the construction of \cref{sec:method} and illustrates its steps on synthetic swarms;
+\cref{fig:overview} follows the same steps on the robot data.
+
+\subsection{The footprint and the moments}
+
+The distribution of the agents is a set of points, which the footprint turns into continuous fields. Four properties
+are asked of it. It must favor no direction, so that the fields do not depend on the orientation of the scene. It must
+be smooth, so that the fields can be differentiated with respect to the positions of the agents. It must be negligible
+beyond a finite window, so that a field is evaluated locally. And the potentials of the flux must follow from it in
+closed form, by solving a Poisson equation without a grid. A Gaussian footprint has all four
+(\cref{prop:hhd,prop:so2,prop:tail}). The same philosophy, observing a signal at all scales at once through Gaussians of
+growing width, underlies the scale space of image analysis \citep{witkin1983scale,lindeberg1994scale}; here, however,
+the Gaussian was chosen for the four properties above, and its width as a lens is only one of its roles. Up to a
+constant factor, $M_0$ and $\vM_1$ are the density and the momentum density by which discrete particle systems are
+coarse-grained into continua, where a Gaussian is also chosen for its smooth fields and exact integrals
+\citep{weinhart2012discrete}.
+
+Two footprints whose centers are $d$ apart are no longer resolved, in the sense that their sum at the midpoint exceeds
+the height of a single footprint, when $d\le2\sqrt{2\ln2}\,\sigma\approx2.35\,\sigma$ (\cref{fig:footprint}). At the
+smallest width of the ladder, $d_{\min}/2$, two agents are therefore resolved as soon as they are more than
+$\sqrt{2\ln2}\,d_{\min}\approx1.18\,d_{\min}$ apart. The floor $\epsilon_\sigma=0.01$\,m of \eqref{eq:ladder} is the
+tracking precision.
+
+\begin{figure}[!htbp]
+\centering
+\figin{\linewidth}{figures/fig_footprint.pdf}
+\caption{The Gaussian footprint: (a)~one agent, evaluated within $5\sigma$; (b)~its profile; (c)~two agents at
+distance $d$, no longer resolved below $2.35\,\sigma$; (d,\,e)~the width as a lens, from the agents to the group.}
+\label{fig:footprint}
+\end{figure}
+\FloatBarrier
+
+Each moment captures something that the others miss (\cref{fig:moments}). A group at rest has $\vM_1=\vec 0$ but
+occupies space in $M_0$. Two streams crossing in opposite directions cancel in $\vM_1$ but add up in
+$\operatorname{tr}\tM_2=\sum_i\|\vv_i\|^2O_i$, the local kinetic intensity. Likewise, a concentrated group and a
+dispersed one can share the same net flux and still differ in $M_0$. The traceless part of $\tM_2$, which measures how
+strongly the velocities align along a common axis, is also invariant under rotations, but we leave it aside.
+
+\begin{figure}[!htbp]
+\centering
+\figin{\linewidth}{figures/fig_moments.pdf}
+\caption{The three moments on a synthetic configuration at one instant ($\sigma=6.5$\,cm): a group at rest, two
+crossing streams and a group moving together (a), and $M_0$, $\|\vM_1\|$ and $\operatorname{tr}\tM_2$ (b--d).}
+\label{fig:moments}
+\end{figure}
+\FloatBarrier
+
+\subsection{The two potentials}
+
+With the sign of \eqref{eq:hhd}, the flux points toward the maxima of the divergence potential $\varphi_\sigma$, which
+mark sinks where the agents converge, and away from its minima, which mark sources. The extrema of the vorticity
+potential $\psi_\sigma$ are centers of rotation: minima for a counterclockwise rotation and maxima for a clockwise one.
+On a bounded domain, the Helmholtz--Hodge decomposition is not unique. It is fixed by boundary conditions, or by setting
+aside a harmonic part that stands for the influences from outside the domain \citep{bhatia2014natural}. Here the flux
+is a sum of Gaussians, smooth on the whole plane and vanishing far from the agents. Such a field has no harmonic part
+\citep[Section~3.1]{bhatia2013helmholtz}, and its two potentials are the solutions that vanish at infinity of the
+Poisson equations $\Delta\varphi_\sigma=\nabla\cdot\vVb_\sigma$ and $\Delta\psi_\sigma=\nabla^{\perp}\cdot\vVb_\sigma$
+\citep[Eq.~16]{bhatia2013helmholtz}, where $\nabla^{\perp}\cdot\vW=\partial_xW_y-\partial_yW_x$ is the two-dimensional
+curl of a vector field $\vW$. The decomposition \eqref{eq:hhd} is then the two-dimensional form of the decomposition
+without its harmonic part \citep[Eq.~15]{bhatia2013helmholtz}. A Gaussian is, up to a factor, the Laplacian of a radial
+function whose derivative has a closed form, which yields the kernel $\kappa_\sigma$ of \eqref{eq:kappa}
+(\cref{app:proofs}); its numerator cancels the singularity of $1/\|\vd\|^2$, so that it equals $1/2$ at $\vd=\vec 0$.
+The two potentials \eqref{eq:potentials} rebuild the averaged flux exactly, with no harmonic remainder
+(\cref{prop:hhd}). The four fields have no unit, and a replay of the recording at another constant rate, which
+multiplies every velocity by the same factor, leaves them unchanged.
+
+The potentials of a Helmholtz--Hodge decomposition also serve to locate the singularities of a vector field
+\citep{polthier2003identifying}. They are usually computed on meshes \citep{polthier2003identifying,tong2003discrete},
+with particles \citep{petronetto2010meshless} or with matrix-valued kernels fitted to scattered samples
+\citep{macedo2010learning}, as reviewed by \citet{bhatia2013helmholtz}; the Gaussian footprint gives them in closed form
+instead. \Cref{fig:flows} shows them on three elementary motions.
+
+\begin{figure}[!htbp]
+\centering
+\figin{\linewidth}{figures/fig_flows.pdf}
+\caption{The divergence and vorticity potentials of three elementary motions of $20$ synthetic agents ($\sigma=7$\,cm;
+arrows: the averaged flux): a sink is a maximum of $\varphi_\sigma$, a source a minimum, and a counterclockwise
+rotation center a minimum of $\psi_\sigma$. The potential that a motion does not produce stays below
+$\nm{flows-flat-pct}\,\%$ of the color scale of its row.}
+\label{fig:flows}
+\end{figure}
+\FloatBarrier
+
+\subsection{The coupling}
+
+Taken separately, the diagrams of $\varphi_\sigma$ and $\psi_\sigma$ record how strong a sink and a vortex are, but not
+whether the two lie at the same place. Multiparameter persistence would summarize several fields together, but its
+summaries do not reduce to a diagram, and comparing them is far less simple
+\citep{carlsson2009theory,botnan2023introduction}. The coupling $J_\sigma$ of \eqref{eq:jacobi} is not a new physical
+quantity, but it records in one field what the separate diagrams miss. Like the other fields, it is invariant under
+rotations and translations, since a rotation does not change a determinant. \Cref{fig:potentials} shows two swarms with
+the same ingredients, arranged differently: the diagrams of $\varphi_\sigma$ and $\psi_\sigma$ change only in part, while
+that of $J_\sigma$ is empty when the sink and the rotation center coincide and appears when they are apart.
+
+
+\subsection{Extended persistence and the sliced distance}
+
+Persistent homology follows how the sublevel sets $\{f\leq c\}$ of a field change as the level $c$ rises
+(\cref{fig:persistence}). A component is born at each minimum and dies when it merges with an older one. Cycles are born
+at saddles and filled at maxima. Ordinary persistence \citep{edelsbrunner2002topological,zomorodian2005computing}
+records the level at which each homology class, a connected component or a cycle, is born and the level at which it
+dies. Some classes never die, such as the component that holds the global minimum; they are called essential, and their
+death would be infinite. Extended persistence \citep{cohen2009extending} completes the ascending sequence of sublevel
+sets with the homology of the domain relative to its superlevel sets, swept downward, so that every class has a finite
+birth and death. It yields six diagrams per field: the ordinary diagrams $\mathrm{Ord}_0$ and $\mathrm{Ord}_1$, the
+relative diagrams $\mathrm{Rel}_1$ and $\mathrm{Rel}_2$, and the extended diagrams $\mathrm{Ext}_0$ and
+$\mathrm{Ext}_1$. On a fixed complex, the bottleneck distance between the extended diagrams of two fields is at most the
+largest difference of their values \citep[Section~6]{cohen2009extending}. Persistence is multiscale in another sense
+than the ladder: at one width, it follows the field across all its levels.
+
+The sliced Wasserstein distance \eqref{eq:sw} is of order one. A field holds a few long-lived structures and many
+short-lived ones, whose number and levels also describe the motion, and squared differences would let a single
+long-lived structure outweigh all of them. The distance is bounded above by $2\sqrt2$ times the first diagram distance
+\citep[Theorem~3.3]{carriere2017sliced}, the least total displacement that matches the points of two diagrams with one
+another or with the diagonal, so that a small displacement of the points changes it little. It is differentiable
+almost everywhere, since the sort and the absolute value are linear by pieces.
+
+\begin{figure}[!htbp]
+\centering
+\figin{\linewidth}{figures/fig_persistence.pdf}
+\caption{From a field to a distance: (a)~the sublevel sets of a profile; (b)~the resulting points, ordinary and
+extended; (c)~two diagrams, each augmented with the projections of the other onto the diagonal (hollow); (d)~their
+sorted projections on one direction.}
+\label{fig:persistence}
+\end{figure}
+\FloatBarrier
+
+\subsection{The domain without a grid}
+
+Each recording gets its own seeds at every width, of three kinds. The first kind is a subset of the agent positions,
+chosen by farthest-point sampling until every position lies within $\nm{cover-sigma}$ of the subset. The second, for
+each field, are the barycenters of the $\nm{frac-pct}\%$ of the Delaunay triangles of these positions where its
+gradient is smallest; these seeds lie near the critical points of the field. The third are up to $\nm{n-jacobi}$ points
+of the coupling skeleton, located by $\nm{n-bis}$ bisection steps on the Delaunay edges where $J_\sigma$ changes sign.
+The five fields are evaluated at the same seeds, and seeds farther than $5\sigma_m$ from every agent at every instant
+are discarded. The domain is the alpha complex of the remaining seeds, computed with GUDHI \citep{maria2014gudhi}. It
+keeps the simplices of their Delaunay triangulation whose alpha value, that is, whose squared radius, is at most
+$(\nm{c-alpha}\,\sigma_m)^2$ \citep{edelsbrunner2010computational}. On this complex, each field $f$ induces a lower-star
+filtration: a vertex enters at the value of $f$ there, and an edge or a triangle at the largest value of $f$ at its
+vertices.
+
+\subsection{Ranks, fusion, affinity propagation and the modal region}
+
+With mutual ranks, a pair of recordings is close only when each is among the nearest of the other, and the percentile
+ranks then give every matrix the same distribution. Weights read from the data, through the spectral gap of each field,
+are compared with the weights of \eqref{eq:view} in \cref{app:fusion}. In the fusion \eqref{eq:snf}, the local kernel
+keeps distinct behaviors apart, while the diffusion joins the recordings of one behavior that single widths leave split.
+
+Affinity propagation passes two kinds of messages, responsibilities and availabilities, between the recordings. The
+messages are updated until a set of exemplars emerges and each recording is assigned to one of them. Its preference,
+which sets how readily a recording becomes an exemplar, is the median of the entries of $\Sstar$, its diagonal first set
+to its largest value. Its damping and its convergence rule are those of its original implementation
+(\cref{tab:settings}), so that the clustering adds no tuned parameter. In the modal consensus, ties for the
+exemplar of a group go to the member most often clustered with the others.
+
+\subsection{Splitting and differentiating a distance}
+
+Each term of the sliced distance is shared equally between the two elements it matches, a projection onto the diagonal
+standing for the point it projects. Each diagram point then passes its share, half and half, to the two seeds that
+realize its birth and its death. Holding the seeds fixed while the trajectories move is exact at first order for the
+critical values, whose gradient vanishes. It is not exact for a quantile of the values, which lies at an ordinary point
+where the gradient does not vanish (\cref{app:attribution}).

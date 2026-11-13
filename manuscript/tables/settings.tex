@@ -1,0 +1,41 @@
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{5.5cm}l@{}}
+\toprule
+Setting & Value & Kind\\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Footprint}}\\
+\hangindent=1em\hangafter=1\quad evaluation window of $\rho_\sigma$ and $K_\sigma$ & $5\sigma$ (\cref{prop:tail}) & resolution\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Ladder}}\\
+\hangindent=1em\hangafter=1\quad number of scales $M$ & $4$ & resolution\\
+\hangindent=1em\hangafter=1\quad floor $\epsilon_\sigma$ & $0.01$\,m, the tracking precision & design\\
+\hangindent=1em\hangafter=1\quad cap & $\sigma_{\max}=D_s/23.5$ & design\\
+\hangindent=1em\hangafter=1\quad estimation of $d_{\min}$, $D_s$ & every instant of every run & design\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Seeds}}\\
+\hangindent=1em\hangafter=1\quad subset of the agent positions & no agent position farther than $0.5\sigma_m$ (at most $20000$ points) & resolution\\
+\hangindent=1em\hangafter=1\quad near-critical seeds & $5\%$ flattest triangles per field & resolution\\
+\hangindent=1em\hangafter=1\quad coupling skeleton & $\le150$ points, $12$ bisection steps & resolution\\
+\hangindent=1em\hangafter=1\quad duplicates & one seed per cell of side $10^{-3}\,\sigma$ & resolution\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Complex}}\\
+\hangindent=1em\hangafter=1\quad alpha complex truncation & squared radius $(3\sigma_m)^2$ & design\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Persistence}}\\
+\hangindent=1em\hangafter=1\quad filtration; diagrams & lower-star, extended; six & design\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Distance}}\\
+\hangindent=1em\hangafter=1\quad sliced Wasserstein & $25$ distinct directions in $[-\pi/2,\pi/2)$ & resolution\\
+\hangindent=1em\hangafter=1\quad order & one (absolute differences), summed over the six diagrams & design\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Fusion}}\\
+\hangindent=1em\hangafter=1\quad ranks; weights & mutual, then percentile; $\tfrac13\rho$, $\tfrac13K$, $\tfrac19\varphi$, $\tfrac19\psi$, $\tfrac19J$ & design\\
+\hangindent=1em\hangafter=1\quad SNF & across the $4$ scale views, $(\knn,t)$ swept over $99$ settings & design\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{AP}}\\
+\hangindent=1em\hangafter=1\quad preference & median of the entries of $S^\star$ (diagonal set to the largest) & design\\
+\hangindent=1em\hangafter=1\quad damping; convergence & $0.9$; $100$ unchanged iterations, $\le1000$ & resolution\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Taxonomy}}\\
+\hangindent=1em\hangafter=1\quad modal consensus & co-association, average linkage cut at $\Cstar$ & design\\
+\bottomrule
+\end{tabular*}

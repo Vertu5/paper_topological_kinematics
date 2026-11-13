@@ -1,0 +1,306 @@
+% ============================================================================
+\section{Settings and notation}
+\label{app:settings}
+
+This appendix lists the settings of the method and tests them one by one, then gathers the notation of the paper.
+\Cref{tab:settings} lists the settings, none of which is tuned on the mission labels.
+
+\begin{table}[!htbp]
+\centering
+\caption{Fixed settings of the method. A \emph{resolution} setting can be refined without changing
+what is computed, only how finely; a \emph{design} setting defines what is computed.}
+\label{tab:settings}
+\tabin{settings}
+\end{table}
+
+To check that no setting decides the result, each one was varied alone on Top-1, through the whole method. Each
+version was compared without labels with a reference: its finest value for a resolution setting, and the value of
+the method for a design choice. The
+comparison uses the rank correlation of the distances, field by field and scale by scale, and the agreement
+of the taxonomies (\cref{tab:study}). None of them changed the number of behaviors, and at most
+\nm{study-runs-moved} of the $250$ runs changed cluster (an adjusted Rand index of at least
+\nm{study-ari-min} with the reference). The distances depend mostly on how finely the domain is sampled at
+the smallest scale, which is why the seeds follow the scale (\cref{sec:seeds}).
+
+\begin{table}[!htbp]
+\centering
+\caption{Each setting varied alone on Top-1, without labels. \emph{Distances}: the Spearman rank correlation
+between the distances at the value of the method and at the finest value tested, the smallest over
+the twenty matrices of fields and scales. For a design choice, it is the smallest over the values tested.
+\emph{Taxonomy}: the smallest adjusted Rand index between the consensus partition of a value tested and
+that of the reference. Resolution settings are checked on the domain of the method (seeds within
+$\sigma/2$ of every robot position) when it was run, otherwise on a fixed subset of $\nm{n-coreset}$ robot positions.}
+\label{tab:study}
+\tabin{study}
+\end{table}
+
+The notation of the paper is gathered in \cref{tab:notation}, grouped by the step of the method that introduces it.
+
+\begin{table}[!htbp]
+\centering
+\caption{Notation, grouped by the step of the method that introduces it.}
+\label{tab:notation}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}l>{\raggedright\arraybackslash}p{6.4cm}l@{}}
+\toprule
+Symbol & Meaning & Defined in\\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Recordings and fields}}\\
+$N$, $T$, $\Delta t$ & agents, instants per recording, sampling step & \cref{sec:fields}\\
+$\vx_i(t)$, $\vv_i(t)$ & position and forward-difference velocity of agent $i$ (vectors) & \cref{sec:fields}\\
+$O_i$, $\sigma$ & Gaussian footprint and its width, the observation scale & \eqref{eq:footprint}\\
+$M_0$, $\vM_1$, $\tM_2$ & moments of order zero, one and two of the velocity distribution (scalar, vector, tensor) & \eqref{eq:moments}\\
+$\vV_\sigma$ & flux, the vector field $\vM_1$ & \eqref{eq:hhd}\\
+$\rho_\sigma$, $K_\sigma$ & density and kinetic intensity & \cref{sec:fields}\\
+$\varphi_\sigma$, $\psi_\sigma$ & divergence and vorticity potentials of the Helmholtz--Hodge decomposition & \eqref{eq:potentials}\\
+$\kappa_\sigma$ & radial kernel of the potentials & \eqref{eq:kappa}\\
+$\vbar$, $\overline{v^2}$ & mean speed and mean squared speed of the recording & \cref{sec:fields}\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Persistence and distances}}\\
+$\sigma_1,\dots,\sigma_M$ & ladder of scales, $M=4$ & \eqref{eq:ladder}\\
+$J_\sigma$ & Jacobi coupling $\sigma^2\det(\nabla\varphi_\sigma,\nabla\psi_\sigma)$ & \eqref{eq:jacobi}\\
+$D^{s}_{f,m}(A)$ & diagram $s$, one of six, of field $f$ at scale $\sigma_m$ for recording $A$ & \eqref{eq:sw}\\
+$d_{f,m}$ & sliced Wasserstein distance between recordings & \eqref{eq:sw}\\
+\addlinespace
+\multicolumn{3}{@{}l}{\emph{Fusion and clustering}}\\
+$\tilde d_{f,m}$ & percentile rank of the mutual rank of $d_{f,m}$ & \cref{sec:fusion}\\
+$W_m$ & balanced view at scale $\sigma_m$ & \eqref{eq:view}\\
+$\knn$, $t$ & neighborhood size and diffusion iterations of the fusion & \eqref{eq:snf}\\
+$\Sstar$ & consensus network after fusion & \cref{sec:fusion}\\
+$C$, $\Cstar$ & number of clusters, its modal value across the local grid & \cref{sec:ap}\\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+% ============================================================================
+\section{The ladder of scales}
+\label{app:gallery}
+
+\Cref{fig:scales_all} shows the five fields of the Shelter exemplar of Top-1 at the four scales of
+the ladder. At the finest scale the fields resolve individual paths and the walls of the shelter; at
+the coarsest they keep the organization of the whole group.
+
+\begin{figure}[!htbp]
+\centering
+\figin{0.70\linewidth}{figures/fig_scales.pdf}
+\caption{The five fields of one recording (the Shelter exemplar of Top-1) at the four scales of the
+ladder, $\nm{sigma1-cm}$, $\nm{sigma2-cm}$, $\nm{sigma3-cm}$ and $\nm{sigma4-cm}$\,cm.
+Color scales are per panel: sequential for the density $\rho_\sigma$ and the kinetic intensity
+$K_\sigma$ (zero is pale blue), diverging for the potentials $\varphi_\sigma$, $\psi_\sigma$ and the
+coupling $J_\sigma$ (blue negative, orange positive, zero gray). White marks points farther than
+$5\sigma$ from every robot at every instant, where the fields are not evaluated.}
+\label{fig:scales_all}
+\end{figure}
+\FloatBarrier
+
+The top of the ladder follows from the merging width $D_s/2.35$ at which the footprints of the whole
+group stop being resolved (\cref{sec:ladder}). \Cref{fig:uncapped} shows what lies near it. On a ladder
+extended up to that width, the density and the vorticity potential of the Homing exemplar keep their
+organization up to a few tens of centimeters. Past that, each field becomes one smooth bump over the
+whole group, and its diagrams no longer depend on how the robots moved. The cap of the method therefore lies far
+below the merging width. $D_s$ measures the extent of the swarm, not the size of the structures of its
+motion, such as the corridor, the shelter or a group of robots.
+
+\begin{figure}[!htbp]
+\centering
+\figin{\linewidth}{figures/figA_uncapped.pdf}
+\caption{The fields near the merging width. The density and the vorticity potential of the Homing
+exemplar on a ladder that extends to the merging width of the whole group, $D_s/2.35$. Beyond a few
+tens of centimeters every field becomes a single featureless bump, whose diagrams no longer
+distinguish behaviors.}
+\label{fig:uncapped}
+\end{figure}
+\FloatBarrier
+
+The method uses the cap $k=\nm{cap-k}$, and its taxonomy hardly depends on this value. For caps
+$\sigma_{\max}=D_s/(2.35\,k)$ from a third of the merging width down to a twentieth of it, the whole method was run on
+Top-1 and the taxonomy obtained as in \cref{sec:ap}. Every cap from $k=\nm{cap-same-kmin}$ to $k=\nm{cap-same-kmax}$, a
+top of the ladder between $\nm{cap-same-cmmin}$ and $\nm{cap-same-cmmax}$\,cm, gives the same taxonomy, and
+$k=\nm{cap-apart-k}$ moves \nm{cap-apart-runs} run. Even with no cap at all, on a fixed subset of $\nm{n-coreset}$ robot
+positions, the taxonomy differs from that of the capped ladder by \nm{uncapped-runs-moved} run, and adding scales between
+the same bounds, up to $\nm{uncapped-mmax}$, leaves it unchanged.
+
+% ============================================================================
+\section{Robustness of the fusion}
+\label{app:fusion}
+
+\subsection{Alternative fusion architectures}
+\Cref{tab:designs} compares, on Top-1 and over the same $99$ settings, our fusion with
+alternatives built from the same rank-normalized matrices and clustered by the same affinity
+propagation. Without diffusion, affinity propagation splits the runs of each single controller of
+Top-1 into several groups, $\nm{design-none-C}$ in all, although each mission is one controller there,
+and every setting returns the same partition. Diffusing first among the
+fields of each moment, then across scales, then across moments, compounds the smoothing. The pair $(\knn,t)$
+no longer means a single resolution, missions merge already at moderate settings (median purity
+\nm{design-hierarchical-medpur}), and the number of clusters stops decreasing regularly with $t$.
+A single SNF
+over all field-and-scale views gives the flux three times the weight of the density. Among the
+architectures that diffuse, the two fusions that balance the moments and the single SNF over twelve views, one per
+moment and scale, reach a median purity of at least \nm{design-top-medpur-min}, and the two others of at most
+\nm{design-low-medpur-max}. The settings in
+which purity and ARI are both one number \nm{design-balanced-perfect} for our fusion, \nm{design-fluxrerank-perfect}
+for the fusion that re-ranks the flux first, and \nm{design-snf12-perfect} for the single SNF over twelve views.
+Our fusion keeps the number of clusters from increasing with $t$ at \nm{design-balanced-mono} of the nine
+neighborhood sizes, the re-ranked fusion at \nm{design-fluxrerank-mono}, and the single SNF over twelve views at
+\nm{design-snf12-mono}.
+
+\begin{table}[!htbp]
+\centering
+\caption{Fusion architectures on Top-1 (same distances, same clustering, $99$ settings).
+\emph{Modal}: settings at the modal count $\Cstar$; \emph{perfect}: settings with purity and ARI equal to
+one; $C\le2$: settings where the partition collapses; \emph{monotone}: neighborhood sizes for which
+$C$ never increases with $t$.}
+\label{tab:designs}
+\tabin{designs}
+\end{table}
+
+
+\subsection{Rank fusion against standard SNF}
+On Top-1, with $\knn=5$, rank fusion settles on \nm{std-ours-C} clusters from $t=\nm{std-ours-t-from}$ on and
+keeps them up to $t=\nm{std-t-max}$. With the affinity of standard SNF on the raw distances instead of ranks, the
+number of clusters drifts with the number of diffusion iterations, from \nm{std-C-first} at
+$t=\nm{std-t-first}$ to \nm{std-merge-C} from $t=\nm{std-merge-from}$ on, where two missions share a cluster
+(purity \nm{std-merge-purity}).
+
+\subsection{Convergence of affinity propagation}
+With damping $0.9$ the messages of affinity propagation change slowly, so the algorithm must be
+given enough iterations to settle. The settings of the original implementation declare convergence
+after a window of $100$ unchanged iterations, within at most $1000$. With them it converges at every
+setting of Top-1 and of Top-10, the largest dataset, after a median of \nm{ap-top10-iter-median}
+iterations on Top-10 and at most \nm{ap-top10-iter-max}. A window of $200$ or $400$ iterations, or a ceiling of $5000$, leaves
+each of the $99$ partitions of both datasets unchanged: the algorithm has time to finish. The
+shorter window of scikit-learn, $15$ iterations, stops earlier and changes \nm{ap-short-top1-changed}
+partitions of Top-1 and \nm{ap-short-top10-changed} of Top-10. Another damping, $0.8$ or $0.95$, or
+another draw of the tie-breaking noise can reach another set of exemplars, at up to
+\nm{ap-other-changed-max} of the $99$ settings. The modal consensus taxonomy stays the same,
+with an adjusted Rand index of at least \nm{ap-other-cons-min} with the reference.
+
+\subsection{Each step of the fusion changed alone}
+\begin{table}[!htbp]
+\centering
+\caption{Each step of the fusion changed alone, on the ten datasets, the taxonomy of every variant
+built on its own modal region, as for the method. \emph{Modal} and \emph{stability}: means over the datasets, without
+labels. \emph{Purity} and \emph{ARI}: means over the datasets. \emph{Misassigned}: runs outside a
+cluster dominated by their mission, summed over the datasets.}
+\label{tab:variants}
+\tabin{variants}
+\end{table}
+
+\Cref{tab:variants} changes one step of the fusion at a time and keeps the others. On the ten
+datasets, the taxonomy of every variant is built on its own modal region, as for the method. The first step is the affinity
+given to each view. Percentile ranks alone, without the mutual ranks, misassign
+\nm{fx-affpercentile-wrong} runs, \nm{fx-affpercentile-xs} of them XOR Aggregation runs placed with
+Shelter (\cref{app:merge}). Percentile ranks passed through the normal quantile function misassign
+\nm{fx-affprobit-wrong}. A Gaussian kernel whose width adapts to each pair, through the distances of the two runs to their seventh neighbors, keeps the purity. It splits the missions
+further, however, with a mean adjusted Rand index of \nm{fx-affselftuning-ari}. Inside one scale, an equal weight per field misassigns
+\nm{fx-fieldsequal-wrong} runs. The weights can also be read from the data. The spectral gap of a
+field at one scale is the largest gap between two consecutive eigenvalues of the normalized Laplacian of its
+neighbor graph, the first gap left out \citep{von2007tutorial}. This graph joins two runs when one is among the
+seven nearest neighbors of the other, with the weight $e^{-d_{f,m}/s}$, where $s$ is the standard deviation of
+the entries of $d_{f,m}$. A larger gap means that the field splits the runs into clearer groups. Given to each
+field alone, these gaps misassign \nm{fx-fieldsconfidence-wrong} runs. Shared within each moment, that is,
+divided by the number of fields of the moment and normalized to sum to one, they give the weights read from the
+data that \cref{sec:fusion} mentions. They reduce to the weights of \eqref{eq:view} when the gaps are equal, and they misassign
+\nm{fx-fieldssourceconf-wrong} runs. The
+weighted geometric mean misassigns \nm{fx-fieldsgeomean-wrong} runs, and the maximum over the fields
+\nm{fx-fieldsmax-wrong}. Across scales, the diffusion is needed: averaging the four views without it returns one partition at every setting, which splits the
+missions into \nm{fx-mean-cmin} to \nm{fx-mean-cmax} groups as controllers are pooled. A single SNF over
+the twenty field-and-scale views merges missions, with \nm{fx-scalessnf20-wrong} runs misassigned. On
+the consensus, affinity propagation with the minimum preference reproduces the taxonomy of the method, with the
+same $\Cstar$ on every dataset and an adjusted Rand index of at least \nm{fx-apmin-ari-min} with it. Louvain
+modularity finds the same $\Cstar$ on \nm{fx-louvain-same} of the ten datasets, at an adjusted Rand index of at least
+\nm{fx-louvain-ari-min}. Clusterings that choose the number of groups from an
+eigengap, from the largest gap of an average-linkage tree or from density merge missions instead,
+into \nm{fx-collapse-cmin} to \nm{fx-collapse-cmax} groups, with a purity of at most
+\nm{fx-collapse-pmax}. A higher adjusted Rand
+index in the table goes with fewer groups on the pooled datasets, not with fewer misassigned runs,
+since that index counts the sub-behaviors against the method (\cref{sec:protocol}).
+
+
+% ============================================================================
+\section{Other descriptions on all the runs}
+\label{app:baselines}
+
+\Cref{tab:baselines_full} compares the descriptions of \cref{tab:baselines} on Top-1 and on Top-10, where the missions
+split into sub-behaviors. There, homogeneity and completeness are the scores to read, since the ARI counts the
+sub-behaviors as errors.
+
+\begin{table}[!htbp]
+\centering
+\caption{Descriptions of the runs under the same fusion, affinity propagation and modal consensus, on Top-1 and Top-10. The
+number of modal settings follows $\Cstar$ in parentheses; \emph{error-free}: settings, out of $99$, in which no run is
+misassigned, those in the modal region in parentheses. The method is shaded. $^{*}$Partition published for the same Top-1
+runs, with five fixed clusters \citep{legarda2026universal}.}
+\label{tab:baselines_full}
+\tabin{baselines}
+\end{table}
+\FloatBarrier
+
+% ============================================================================
+\section{Rotations on the robot data}
+\label{app:invariance}
+
+To test the invariance on the robot data, five runs of Top-1, one per mission, were rotated by random angles about the center of the arena
+and processed again with the same code. For every field and scale, the distance between each run and
+its rotated copy was divided by the median distance between the run and twelve other runs of its mission. The
+density, the kinetic intensity and both potentials are recovered up to rounding, within \nm{inv-other-max} of that
+median distance. The coupling differs most at the finest scale, by at most \nm{inv-worst} of it, because it is the
+most sensitive to the placement of the seeds.
+
+% ============================================================================
+\section{XOR Aggregation runs that resemble Shelter}
+\label{app:merge}
+
+\begin{figure}[!htbp]
+\centering
+\figin{\linewidth}{figures/figA_merge.pdf}
+\caption{XOR Aggregation runs that percentile ranks alone, without mutual ranks, place in the Shelter cluster on
+Top-4. (a)~Median fraction of robots
+moving faster than $1$\,cm/s over the run, for these runs, for the other XOR runs and for the Shelter
+runs. (b--d)~Final positions of the robots, pooled over the runs of each group.}
+\label{fig:merge}
+\end{figure}
+
+With percentile ranks alone instead of mutual ranks, XOR Aggregation runs join the Shelter cluster. On Top-3, all
+\nm{merge-top3-n} XOR Aggregation runs do, and on Top-4, \nm{merge-top4-n} of the $200$ do, from every controller of the
+mission. The method places none of them with Shelter on either dataset. Compared with the other XOR runs of Top-4, these
+runs settle late, after a median of \nm{merge-top4-settle-abs}\,s against \nm{merge-top4-settle-kept}\,s. They also move
+about twice as fast on average (\nm{merge-top4-speed-abs} against \nm{merge-top4-speed-kept}\,m/s, and
+\nm{merge-top4-speed-shel}\,m/s for Shelter), yet they end on the same two black areas (\cref{fig:merge}). What keeps them
+with their mission is their neighborhood. Among their seven nearest neighbors in each view, Shelter runs make up
+\nm{merge-top4-nn-pct}\,\% with percentile ranks, against \nm{merge-top4-nn-mut}\,\% with mutual ranks. The Shelter runs
+have one another as nearest neighbors, so their mutual ranks with these runs are large.
+
+% ============================================================================
+\section{Stability and reproducibility of the attribution}
+\label{app:attribution}
+
+The attribution holds the seeds fixed, which is justified at the critical points inside the domain.
+There the gradient of the field vanishes, so that a critical value does not change at first order when
+its point moves with the trajectories, as the envelope theorem states. On a synthetic milling group,
+perturbing the tracks changes the minimum of $\psi_\sigma$ by the same amount, to the precision of the
+finite differences, whether the minimum is relocated or held in place. At a seed that
+moves with a robot, as the seeds taken from the robot positions do, the two derivatives differ even in sign
+(\nolinkurl{manuscript/verify_propositions.py}). The value distance splits in the same way as the sliced
+distance: the term of each quantile is shared equally between the two runs, and the half of a run between the two
+order statistics that the quantile interpolates.
+
+The split of \cref{sec:res_attribution} was checked in two ways. First, a Gaussian noise was added to every
+position of the Directional Gate exemplar, with the seeds held fixed. A noise of $2$\,mm changes the field at the
+seeds by up to \nm{attr-stab-field-change} of its largest value. It leaves \nm{attr-stab-pers} of the topological
+split and \nm{attr-stab-val} of the value split on the same seeds, and the topological split is the more stable at
+every noise tested (\nm{attr-stab5-pers} against \nm{attr-stab5-val} at $5$\,mm). The term of a quantile falls on
+the seed that holds that rank, which a small noise can change, while the share of a diagram point stays on its
+critical points. Second, the split was repeated over the \nm{attr-runs} runs of the Directional Gate controller,
+each against the same Foraging exemplar. For the persistence diagrams, the two extrema with the largest shares are
+a maximum and a minimum of $\psi_\sigma$, the two rotation centers of the traffic, \nm{attr-centres-phrase}
+\nm{attr-runs} runs, with a median share of \nm{attr-centres-share}. Half of the mean map lies in
+\nm{attr-mean-half-pers} of the arena, against \nm{attr-mean-half-val} for the value distributions, whose split
+covers the whole positive cell of the potential. The centers themselves move by about \nm{attr-centres-spread} from
+run to run, so two single topological maps overlap less on average (\nm{attr-overlap-pers}) than two diffuse value
+maps (\nm{attr-overlap-val}). What recurs from run to run is the structure, not its exact position.
+
+The split for the ten pairs of missions is given in \cref{tab:attribution} (\cref{sec:res_attribution}). In
+\nm{attrp-pairs-50} of the ten pairs, the two largest extrema are a maximum and a minimum in every one of the
+\nm{attr-runs} runs; only Directional Gate against XOR Aggregation drops to $\nm{attrp-recur-min}/50$, because one run
+splits its largest weights across two maxima of $\rho_\sigma$ before reaching its minimum.
+

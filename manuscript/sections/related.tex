@@ -1,0 +1,116 @@
+% ============================================================================
+\section{Related work}
+\label{sec:related}
+
+The taxonomies of swarm robotics are built a priori. \citet{brambilla2013swarm} classified the field by its design and
+analysis methods and by collective behavior, into spatially organizing behaviors, navigation, collective
+decision-making and others. \citet{schranz2020swarm} applied such classes of basic behaviors to current applications,
+and \citet{rossi2018review} classified the algorithms by their mathematical structure. These taxonomies organize what a
+swarm can be designed to do, not what a set of recordings contains.
+
+Behaviors are usually compared through descriptors chosen in advance: order parameters such as polarization and
+milling \citep{vicsek1995novel,couzin2002collective,dorsogna2006self}, which reveal the swarm, milling and polarized
+states of fish schools \citep{tunstrom2013collective}, or the behavior characterizations of swarm robotics
+\citep{gomes2013generic,gomes2014systematic}. Which groups a comparison finds depends on the pairing of these features
+with a similarity measure \citep{fialho2026differ}. Classifiers learn instead human labels of flocking, alignment and
+grouping \citep{abpeikar2023motion}, or the labeled phases of a real robot swarm, with which unsupervised clusterings
+agree only moderately \citep{alhubaishi2026interpretable}.
+
+Other works let behaviors emerge. Novelty search explores the controllers of limited robots, and k-medoids clusters
+the archive into a taxonomy whose medoids are representative behaviors, their number chosen by inspection
+\citep{brown2018discovery}. The behavior space was later learned with human feedback, and the search
+extended to heterogeneous swarms and real robots \citep{mattson2023leveraging,mattson2023exploring,mattson2025discovery}.
+\citet{titus2021unsupervised} compare by diffusion maps the networks that positions and velocities define over a group,
+and cluster the result into three groups fixed in advance. Computational ethology goes furthest toward a taxonomy
+discovered from motion, but for single animals: the postural dynamics of flies divide, by a watershed of their density,
+into more than one hundred stereotyped behaviors organized hierarchically \citep{berman2014mapping,berman2016predictability},
+and the approach extends to pairs of animals \citep{klibaite2017unsupervised}.
+
+Topological data analysis summarizes shapes instead of chosen descriptors. \citet{topaz2015topological} summarized in
+CROCKER plots the persistent homology of the point clouds that agents form in the space of positions and velocities. On
+positions alone, such summaries classify the regimes of the D'Orsogna model better than order parameters
+\citep{bhaskar2019analyzing} and separate the regimes of a crowd \citep{kern2026study}. \citet{corcoran2017modelling}
+followed a school of fish by zig-zag persistence of a density estimated on a grid. Other works follow these summaries in
+time \citep{xian2022capturing,sathiyakumar2024detecting}, embed persistence images \citep{suetani2025unsupervised},
+learn latent dynamics of diagrams \citep{zeng2024neural}, or measure the fluctuations of a large flock across
+hierarchical levels \citep{mototake2024topological}. In all of them, the topology is that of a point cloud or of a
+density, and velocities, when used, are coordinates of points rather than a field. \citet{legarda2026universal}
+described instead the topology of a velocity field, through the extended persistence of its Helmholtz--Hodge
+potentials, and grouped the recordings into a fixed number of clusters or by HDBSCAN. \Cref{tab:related} summarizes what
+each of these approaches provides.
+
+\begin{table}[!htbp]
+\centering
+\caption{What each approach provides (\cmark\ yes, -- no). \emph{medoids}: k-medoids for a number of clusters chosen
+by the user; \emph{partly}: with one of the clustering methods used; \emph{features}: importances of hand-crafted
+features; \emph{time}: time scales; \emph{levels}: the levels of one flock.}
+\label{tab:related}
+\newcommand{\appr}[2]{#1\newline{\footnotesize\color{black!72}\citealp{#2}}}
+\newcommand{\tw}[1]{{\footnotesize\emph{#1}}}
+\newcommand{\rot}[1]{\multicolumn{1}{c}{\rotatebox[origin=l]{90}{#1}}}
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{1.0}
+\newcommand{\rowsep}{\arrayrulecolor{black!22}\specialrule{0.4pt}{1.5pt}{1.5pt}\arrayrulecolor{black}}
+\newcommand{\groupsep}{\arrayrulecolor{black!55}\specialrule{0.6pt}{2pt}{1.5pt}\arrayrulecolor{black}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+% the approach column takes what the eight narrow columns (6.81 cm) and their padding (16 x 1 pt) leave of the text
+% width, so that the table is exactly as wide as the text and the shaded row is continuous
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{\dimexpr\linewidth-6.81cm-16pt\relax}C{0.72cm}C{0.82cm}C{0.62cm}C{0.8cm}C{0.8cm}C{1.0cm}C{1.05cm}C{1.0cm}@{}}
+\toprule
+& \multicolumn{3}{c}{Representation} & \multicolumn{5}{c}{Taxonomy returned}\\
+\cmidrule(lr){2-4}\cmidrule(l){5-9}
+Approach & \rot{Collective} & \rot{Velocities} & \rot{Scales} & \rot{No labels} & \rot{Number} & \rot{Exemplar} &
+\rot{Hierarchy} & \rot{Attribution}\\
+\midrule
+\multicolumn{9}{@{}l}{\emph{Taxonomies set a priori}}\\
+\appr{Classes of behaviors or algorithms}{brambilla2013swarm,schranz2020swarm,rossi2018review}
+  & \cmark & -- & -- & -- & -- & -- & \tw{a priori} & --\\
+\groupsep
+\multicolumn{9}{@{}l}{\emph{Descriptors chosen in advance}}\\
+\appr{Order parameters}{vicsek1995novel,couzin2002collective,tunstrom2013collective}
+  & \cmark & \cmark & -- & -- & -- & -- & -- & --\\
+\rowsep
+\appr{Behavior characterizations}{gomes2013generic,fialho2026differ}
+  & \cmark & \tw{varies} & -- & -- & -- & -- & -- & --\\
+\rowsep
+\appr{Supervised classifiers and clustering}{abpeikar2023motion,alhubaishi2026interpretable}
+  & \cmark & \cmark & -- & \tw{partly} & \tw{partly} & -- & -- & \tw{features}\\
+\groupsep
+\multicolumn{9}{@{}l}{\emph{Behaviors discovered without labels}}\\
+\appr{Novelty search, then k-medoids}{brown2018discovery,mattson2023leveraging,mattson2023exploring,mattson2025discovery}
+  & \cmark & \tw{varies} & -- & \cmark & -- & \tw{medoids} & -- & --\\
+\rowsep
+\appr{Manifold learning}{titus2021unsupervised}
+  & \cmark & \cmark & -- & \cmark & -- & -- & -- & --\\
+\rowsep
+\appr{Behavioral maps of animals}{berman2014mapping,berman2016predictability,klibaite2017unsupervised}
+  & \tw{pairs} & \cmark & \tw{time} & \cmark & \cmark & -- & \cmark & --\\
+\groupsep
+\multicolumn{9}{@{}l}{\emph{Topology of positions}}\\
+\appr{CROCKER plots}{topaz2015topological,bhaskar2019analyzing,kern2026study}
+  & \cmark & \tw{partly} & \cmark & \cmark & -- & \tw{medoids} & -- & --\\
+\rowsep
+\appr{Zig-zag persistence}{corcoran2017modelling}
+  & \cmark & -- & -- & \cmark & -- & \tw{medoids} & -- & --\\
+\rowsep
+\appr{Persistence over time}{sathiyakumar2024detecting}
+  & \cmark & -- & \cmark & -- & -- & -- & -- & --\\
+\rowsep
+\appr{Levels of a large flock}{mototake2024topological}
+  & \cmark & -- & \cmark & -- & -- & -- & \tw{levels} & --\\
+\groupsep
+\multicolumn{9}{@{}l}{\emph{Topology of motion}}\\
+\appr{Persistence of a velocity field}{legarda2026universal}
+  & \cmark & \cmark & -- & \cmark & \tw{partly} & -- & -- & --\\
+\groupsep
+\methodrow
+\textbf{This work} & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each of these lines of work addresses its own problem, from organizing the design of swarms to characterizing physical
+regimes, mapping the postures of single animals or comparing velocity fields, and each provides part of what a
+taxonomy of collective behaviors requires. What remains open is to join a topological description of collective
+motion with the unsupervised discovery of a taxonomy and with an explanation of its differences down to the agents,
+which is what \cref{sec:method} presents.

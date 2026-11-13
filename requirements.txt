@@ -1,0 +1,12 @@
+# Versions used for the results of the paper (Python 3.12). The GPU paths need torch with CUDA and
+# triton; without a GPU everything runs on the CPU with the same method.
+numpy==2.3.5
+scipy==1.18.1
+scikit-learn==1.9.1      # affinity propagation; the GPU version repeats its arithmetic (src/classification/ap.py)
+gudhi==3.13.0            # alpha complex and extended persistence
+joblib==1.6.0
+matplotlib==3.11.2
+sympy==1.14.0            # manuscript/verify_propositions.py
+torch==2.14.0            # GPU fields, distances, fusion and attribution
+triton==3.8.0            # GPU kernels of the fusion and of affinity propagation
+# notebooks: jupyter (nbconvert, ipykernel) to run notebooks/ headless

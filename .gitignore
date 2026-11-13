@@ -1,0 +1,83 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# LaTeX / TeX outputs
+*.aux
+*.bbl
+*.blg
+*.brf
+*.bcf
+*.fls
+*.fdb_latexmk
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.pdfsync
+*.spl
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Large directories
+data/
+results/
+
+# Local virtual environments (any name)
+.venv*/
+
+# Local archive of superseded scripts, figures and results (kept on disk, not versioned)
+archive/
+
+# Third-party papers are referenced, not redistributed
+related_work/*.pdf
+
+# editor settings
+.vscode/
+
+# Zenodo deposit built by make_zenodo_bundle.sh (derived results; never committed)
+zenodo/
+
+# arXiv submission built by make_arxiv_bundle.sh (never committed)
+arxiv/
+arxiv.tar.gz
+submission/
+submission.zip
+
+# Private to the author and the editor: the cover letter (suggested referees) and the publication steps
+manuscript/cover_letter.tex
+manuscript/cover_letter.pdf
+PUBLICATION.md
+CLAUDE.md
+.claude/
+NOTE_*.md
+analysis/drafts_stable_states/
+
+# one PDF per part of the paper, sent for review one at a time
+manuscript/review/
