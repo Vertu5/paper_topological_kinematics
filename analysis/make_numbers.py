@@ -21,7 +21,7 @@ from pipeline import config as CFG0  # noqa: E402
 import run_sweep as _RS  # noqa: E402
 P = ROOT / "results" / "epuck" / "paper"
 MS = ROOT / "manuscript"
-TAB = MS / "tables"; TAB.mkdir(exist_ok=True)
+TAB = MS / "tables"; TAB.mkdir(parents=True, exist_ok=True)
 KNNS = [3, 5, 7, 9, 11, 13, 15, 20, 25]
 TS = [1, 2, 3, 5, 7, 9, 10, 12, 15, 20, 25]
 MNAME = ["Directional Gate", "Foraging", "Homing", "Shelter", "XOR Aggregation"]

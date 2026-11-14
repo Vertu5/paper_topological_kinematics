@@ -26,5 +26,5 @@
 
 The scripts run by `run_all.sh` appear in its order. `precision_check.py` and `parameter_study.py` are studies run
 separately; `make_numbers.py` reads the summaries of the parameter study. The checks step of `run_all.sh` also runs
-`manuscript/verify_propositions.py` (the propositions in SymPy). Superseded scripts are in the local `archive/` (not
+`analysis/verify_propositions.py` (the propositions in SymPy). Superseded scripts are in the local `archive/` (not
 published).

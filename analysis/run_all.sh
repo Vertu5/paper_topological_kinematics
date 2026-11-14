@@ -32,7 +32,7 @@ step() {         # step <name> <command...>: run unless FROM names a later step
 }
 
 step pipeline     python run_pipeline.py                     # stages 1-3: fields, persistence, distances
-step checks       bash -c "python analysis/verify_code.py && python manuscript/verify_propositions.py"   # code = formulas; propositions
+step checks       bash -c "python analysis/verify_code.py && python analysis/verify_propositions.py"   # code = formulas; propositions
 step grid         python run_sweep.py grid --n-jobs "$J"     # 99 settings on every Top-n
 step taxonomy     python run_sweep.py taxonomy               # plateau consensus
 step apcheck      python analysis/ap_check.py               # AP finishes: longer window, ceiling, damping, noise
