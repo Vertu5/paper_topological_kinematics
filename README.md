@@ -1,4 +1,4 @@
-# Recovering a Taxonomy of Collective Behaviors from Motion Alone
+# Recovering a Taxonomy of Collective Behaviors from Trajectories Alone
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](requirements.txt)
 [![License: MIT / CC BY 4.0](https://img.shields.io/badge/License-MIT%20%2F%20CC--BY--4.0-yellow.svg)](LICENSE)

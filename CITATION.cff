@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this code or these results, please cite them as below."
-title: "Recovering a Taxonomy of Collective Behaviors from Motion Alone: code and derived results"
+title: "Recovering a Taxonomy of Collective Behaviors from Trajectories Alone: code and derived results"
 authors:
   - family-names: "Ndinga Oba"
     given-names: "Olivier Vertu"
