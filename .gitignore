@@ -55,8 +55,8 @@ results/
 # Local archive of superseded scripts, figures and results (kept on disk, not versioned)
 archive/
 
-# Third-party papers are referenced, not redistributed
-related_work/*.pdf
+# Local reference papers and reading notes (kept on disk, not versioned)
+related_work/
 
 # editor settings
 .vscode/
