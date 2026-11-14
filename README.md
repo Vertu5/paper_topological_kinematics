@@ -3,11 +3,8 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](requirements.txt)
 [![License: MIT / CC BY 4.0](https://img.shields.io/badge/License-MIT%20%2F%20CC--BY--4.0-yellow.svg)](LICENSE)
 [![Zenodo](https://img.shields.io/badge/Data%20%26%20Results-10.5281%2Fzenodo.23440748-1f6feb.svg)](https://doi.org/10.5281/zenodo.23440748)
-[![Formal Proofs: Lean 4 + SymPy](https://img.shields.io/badge/Proofs-Lean%204%20%2B%20SymPy-6f42c1.svg)](manuscript/lean/README.md)
 
 From tracked 2-D positions alone—with no labels, task objectives, or fixed cluster count—this work recovers an **unsupervised behavioral taxonomy** of swarm recordings: five $\mathrm{SO}(2)$-invariant Gaussian-splatted fields ($\rho, K, \varphi, \psi, J$) evaluated on grid-free seeds, summarized by extended persistence, compared via sliced Wasserstein distance ($\mathrm{SW}_1$), fused across four data-driven scales by Similarity Network Fusion (SNF), and clustered via Affinity Propagation (`Purity 0.999–1.000` across `250–2,500` runs). Because the entire chain is differentiable, any distance traces directly back to critical field structures and individual robots.
-
-📄 **Paper:** [`manuscript/paper.pdf`](manuscript/paper.pdf) (full arXiv with appendices) · [`manuscript/journal.pdf`](manuscript/journal.pdf) + [`manuscript/supplementary.pdf`](manuscript/supplementary.pdf)
 
 ![Gaussian Splatting Footprint Intuition Demo](assets/gaussian_splatting_demo.gif)
 
@@ -25,22 +22,18 @@ pip install -r requirements.txt
 # Place raw ARGoS tracks in data/ (or unpack the Zenodo derived archives into results/), then run:
 nohup nice -n 19 bash analysis/run_all.sh > results/run_all.log 2>&1 &
 
-# Resume from a specific stage (e.g. sweep, figures, numbers, paper)
-FROM=paper bash analysis/run_all.sh
+# Resume from a specific stage (e.g. sweep, figures, numbers)
+FROM=figures bash analysis/run_all.sh
 ```
 
 On CUDA (`torch` + `triton`), stages 1, 3, fusion, Affinity Propagation, and differentiable attribution run on GPU; without CUDA, the identical mathematical method executes on CPU (distances, SNF, and Affinity Propagation match CPU/GPU bit for bit).
 
-### 2. Standalone Verification & Paper Build
+### 2. Standalone Code Verification
 
 ```bash
 python analysis/verify_code.py            # Code vs closed-form formulas & CPU/GPU parity
-python manuscript/verify_propositions.py  # SymPy & quadrature checks (Propositions 1–3, Appendices A & G)
-python analysis/make_numbers.py           # Writes 832 macros & verifies 136 textual claims
-bash manuscript/build.sh                  # Compiles paper.pdf, journal.pdf & supplementary.pdf
+python analysis/make_numbers.py           # Verifies 136 textual claims from derived results
 ```
-
-Formal Lean 4 machine-checked proofs of Propositions 1–3 live in [`manuscript/lean/`](manuscript/lean/README.md).
 
 ---
 
@@ -62,8 +55,7 @@ paper_topological_kinematics/
 ├── analysis/                      # Reproduction script (run_all.sh), figures, baselines, attribution & audits
 ├── notebooks/                     # Pre-executed educational & reproduction notebooks (00–07)
 ├── assets/                        # Animated explanatory GIFs for kinematics, persistence, phases & attribution
-├── figures/                       # Publication figures (PDF + PNG)
-└── manuscript/                    # LaTeX sources, Lean 4 proofs & SymPy checks
+└── figures/                       # Publication figures (PDF + PNG)
 ```
 
 ---
@@ -105,4 +97,4 @@ paper_topological_kinematics/
 
 - **Upstream trajectories:** 2,500 simulated ARGoS runs of 20 e-puck robots across five missions (10 AutoMoDe-Chocolate controllers per mission $\times$ 50 seeds) from [Legarda Herranz et al. (2026)](https://github.com/glegarda/swarm-tda) and [Hasselmann et al. (2021)](https://doi.org/10.1038/s41467-021-24642-3).
 - **Derived results & code archive:** [`10.5281/zenodo.23440748`](https://doi.org/10.5281/zenodo.23440748) (`make_zenodo_bundle.sh`).
-- **License:** Code under the **MIT License** ([`LICENSE`](LICENSE)); Springer Nature template files (`sn-jnl.cls`, `sn-apacite.bst`) retain their own licenses; Zenodo derived results under **CC BY 4.0**.
+- **License:** Code under the **MIT License** ([`LICENSE`](LICENSE)); Zenodo derived results under **CC BY 4.0**.

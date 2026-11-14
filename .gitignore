@@ -58,6 +58,9 @@ archive/
 # Local reference papers and reading notes (kept on disk, not versioned)
 related_work/
 
+# Local manuscript sources and proofs (kept on disk, not versioned)
+manuscript/
+
 # editor settings
 .vscode/
 
