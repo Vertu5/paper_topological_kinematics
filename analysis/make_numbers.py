@@ -1335,7 +1335,7 @@ if ms or unc:
     _study_rows.append(("number of scales $M$", "design", "3 to 6 (and 4 to 40 uncapped)", str(CFG0.M_SCALES), "--", _worst({**ms, **unc})))
 cp = {k: v for k, v in _rows_of(STF, "ladder", _half).items() if str(k).startswith("cap")}
 if cp:
-    _study_rows.append(("cap $k$ of the ladder", "design", "3 to 20", f"{CFG0.SIGMA_MAX_FACTOR:g} (modal region levels off)", "--", _worst(cp)))
+    _study_rows.append(("cap $k$ of the ladder", "design", "3 to 20", f"{CFG0.SIGMA_MAX_FACTOR:g}", "--", _worst(cp)))
 for name, label, rng, method in (("damping", "AP damping", "0.8 to 0.95", "0.9"), ("conv", "AP convergence window", "50 to 400", "100"),
                                  ("max_iter", "AP ceiling", "1000, 5000", "1000"), ("seed", "AP tie-breaking noise", "5 draws", "0")):
     rows = _rows_of(STM, name)
