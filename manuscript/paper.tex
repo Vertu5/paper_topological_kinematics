@@ -69,7 +69,7 @@ collective must be read in the same way, at several scales at once, which fields
 spreads each agent over a width that acts as the observation scale. Our previous work used a topological similarity of velocity and
 density fields to imitate swarm behaviors \citep{ndinga2025thesis}; here, fields and topology serve a taxonomy.
 
-This paper makes four contributions, summarized in \cref{fig:overview}. (i)~Each recording is represented by five
+This paper makes four contributions. (i)~Each recording is represented by five
 rotation-invariant fields at four scales derived from the data: the density, the kinetic intensity, the two
 Helmholtz--Hodge potentials of the flux, in closed form on the whole plane, and their Jacobi coupling. (ii)~Each field
 is summarized by its extended persistence, computed without a grid. Sliced Wasserstein distances, rank-normalized and
@@ -370,7 +370,7 @@ we zoom into the dotted local grid in \cref{sec:res_control}, where \nm{sw-maing
 step at least $3$ up to $50n$ and $t$ from $1$ to $\nm{sw-t-max}$. The color gives the state read from the clusters mixed
 above a tenth (single-run clusters set aside, leaving four groups in Shelter + XOR and three or two in the coarse
 family phases); hatched: a mission partly merged with another. Black lines mark transitions, the dotted box the local
-grid of \cref{fig:resolution}, and the dashed line the edge of purity one.}
+grid of \cref{sec:res_control}, and the dashed line the edge of purity one.}
 \label{fig:states}
 \end{figure}
 
@@ -407,7 +407,18 @@ within them; bold: the best field of each pair.}
 \label{sec:res_control}
 
 Without being told how many behaviors there are, zooming into the local grid recovers the five missions of Top-1
-(\cref{fig:resolution}). Five clusters hold over most of the local grid, \nm{top1-plateau} of the $99$ settings, the
+(\cref{fig:resolution}).
+
+\begin{figure}[!t]
+\centering
+\figin{0.88\linewidth}{figures/fig_resolution_map.pdf}
+\caption{Local resolution maps of the ten datasets over $\knn\in[3,25]$ and $t\in[1,25]$: number of clusters $C$ at each
+setting, purity against the five missions on $[0,1]$ (at least \nm{maps-purity-min} across all \nm{all-settings-n}
+settings), and the modal region ($C=\Cstar$) outlined in white.}
+\label{fig:resolution}
+\end{figure}
+
+Five clusters hold over most of the local grid, \nm{top1-plateau} of the $99$ settings, the
 largest modal region of the ten datasets, and \nm{top1-errfree} of the $99$ settings misassign no run. Off the modal
 region, only the finest settings give more clusters, and these cut the missions into pure pieces rather than mixing
 them.
@@ -419,17 +430,6 @@ controllers divides into controller-level sub-behaviors instead of mixing with a
 transient bridge at $\knn=\nm{top10-worst-knn}$ for $t=5$--$9$ drops to purity \nm{top10-worst-pur}
 (\nm{top10-worst-err} misassigned runs at $t=\nm{top10-worst-t}$), before longer diffusion restores purity at or above
 \nm{top10-k3-t10plus-pmin} for all $t\ge 10$.
-
-\begin{figure}[p]
-\centering
-\figin{\linewidth}{figures/fig_resolution_map.pdf}
-\caption{Local resolution maps of the ten datasets over $\knn\in[3,25]$ and $t\in[1,25]$: number of clusters $C$ at each
-setting, purity against the five missions on $[0,1]$ (at least \nm{maps-purity-min} across all \nm{all-settings-n}
-settings), and the modal region ($C=\Cstar$) outlined in white.}
-\label{fig:resolution}
-\end{figure}
-% the maps fill a page of their own: the next paragraph, on the table, starts after them
-\clearpage
 
 Scored against the missions (\cref{tab:taxonomy}), the modal consensus of Top-1 places every run with its mission. The
 taxonomies of the pooled datasets keep a homogeneity close to one, since no cluster mixes missions, while their
@@ -495,23 +495,25 @@ Top-8 to Top-10, which include atypical controllers.}
 
 The map says how the behaviors group at every resolution, but not what a behavior looks like. For this, the taxonomy gives each behavior an exemplar, the run that affinity propagation selects most often
 across the modal region (\cref{fig:fields}). An exemplar is a recorded run, not an average of runs, so it can be replayed,
-inspected or imitated, and its fields show the behavior directly. Each mission leaves its own imprint on them. In
+inspected or imitated, and its fields show the behavior directly.
+
+\begin{figure}[!htb]
+\centering
+\figin{0.76\linewidth}{figures/fig_fields.pdf}
+\caption{The five fields of the exemplar of each behavior on Top-1, at $\sigma_3=\nm{sigma3-cm}$\,cm, beside the
+tracks of its robots (final positions in black). Density and kinetic intensity run from light to dark blue, the
+potentials and the coupling from blue (negative) through gray to red (positive), each panel on its own scale. A red
+maximum of $\varphi_\sigma$ is a sink and a blue minimum a source; a blue minimum of $\psi_\sigma$ is a
+counterclockwise rotation center. White: farther than $5\sigma$ from every robot.}
+\label{fig:fields}
+\end{figure}
+
+Each mission leaves its own imprint on them. In
 Directional Gate, the density and the kinetic intensity follow the corridor and the gate, and the divergence potential
 splits the arena into a source half and a sink half. Foraging fills most of the arena with round trips. Homing combines
 a single dense spot, where the robots end, with an agitation spread over the arena by the crossing that precedes it.
 Shelter shows the shelter and the lit wall in its density, and bands of opposite rotation on either side of the
 shelter. XOR Aggregation, finally, splits its robots between its two black areas.
-
-\begin{figure}[!htb]
-\centering
-\figin{0.8\linewidth}{figures/fig_fields.pdf}
-\caption{The five fields of the exemplar of each behavior on Top-1, at $\sigma_3=\nm{sigma3-cm}$\,cm, beside the
-tracks of its robots (final positions in black). Density and kinetic intensity run from light to dark blue, the
-potentials and the coupling from blue (negative) through grey to red (positive), each panel on its own scale. A red
-maximum of $\varphi_\sigma$ is a sink and a blue minimum a source; a blue minimum of $\psi_\sigma$ is a
-counterclockwise rotation center. White: farther than $5\sigma$ from every robot.}
-\label{fig:fields}
-\end{figure}
 
 The five fields see different things. The density and the kinetic intensity coincide where the robots keep moving, as
 in Directional Gate and Foraging, and part where they stop: the density of Homing marks where its robots end, while its
@@ -525,16 +527,8 @@ distance says in what.
 \label{sec:res_attribution}
 
 The last component of the taxonomy explains its differences. Splitting the distance between two exemplars, term by
-term over the diagram points and from each point over the seeds of its birth and death, shows what makes them differ. We follow Directional Gate and Foraging as an example (\cref{fig:attribution}), before the ten pairs of
-missions (\cref{tab:attribution}). On the vorticity
-potential, which separates them best, the whole distance lies on critical points, and the two rotation centers of the
-traffic carry the largest share, \nm{attr-centres-exemplar}. The rest spreads over the other critical points, saddles
-included, so the difference rests on the organization of the field rather than on a single structure. Split through the
-distributions of values instead, \nm{attr-val-ordinary} of the distance lands on ordinary points that merely hold a
-quantile, and the split is less stable under noise. Carried back to the robots, the difference concentrates at the end
-of the corridor, where the robots gather and turn. Repeated over the \nm{attr-runs} runs of the Directional Gate
-controller, the largest shares fall on the same two rotation centers in every run, and their mean map keeps two compact
-regions, whereas the split of the values spreads over the whole positive cell of the potential.
+term over the diagram points and from each point over the seeds of its birth and death, shows what makes them differ.
+We follow Directional Gate and Foraging as an example (\cref{fig:attribution}).
 
 \begin{figure}[!htb]
 \centering
@@ -545,20 +539,18 @@ Single-run robot maps (b, e) use square-root color scaling with robot trajectori
 \label{fig:attribution}
 \end{figure}
 
-The example is not an isolated case. Split on the field that separates each pair best, every pair of missions places
-its whole topological distance on critical points (\cref{tab:attribution}). Across the \nm{attr-runs} runs of the first
-controller, \nm{attrp-pairs-50} of the ten pairs place their two largest extrema on a maximum and a minimum in every
-single run ($50/50$). Only Directional Gate against XOR Aggregation drops to $\nm{attrp-recur-min}/50$, because a single
-run splits its largest weights across two maxima of the density $\rho_\sigma$ rather than pairing the maximum with a
-minimum. These two extrema carry a larger share of the split on the potentials and their coupling than on the density
-and the kinetic intensity, whose differences spread over more critical points. Under a noise of $2$\,mm, the topological
-split stays on the same seeds more than that of the values for every pair. Two mechanisms explain why the exact-seed
-score drops to $0.65$--$0.66$ on three pairs: on Homing paired with Shelter or XOR Aggregation via kinetic intensity
-$K_\sigma$, $2$\,mm jitter on nearly resting robots changes the small peak value of $K_\sigma$ by up to
-\nm{attrp-homing-k-change}; on Shelter against XOR Aggregation via $\varphi_\sigma$, critical seeds shift locally
-between neighboring vertices while \nm{attrp-sx-blur} of the topological weight stays within one footprint width
-$\sigma$. A difference between two behaviors is thus named by the structures that carry it and located on the robots
-that shaped them.
+On the vorticity potential, which separates these two missions best, the whole distance lies on critical points, and
+the two rotation centers of the traffic carry the largest share, \nm{attr-centres-exemplar}. The rest spreads over
+the other critical points, saddles included, so the difference rests on the organization of the field rather than on a
+single structure. Split through the distributions of values instead, \nm{attr-val-ordinary} of the distance lands on
+ordinary points that merely hold a quantile, and the split is less stable under noise. Carried back to the robots,
+the difference concentrates at the end of the corridor, where the robots gather and turn. Repeated over the
+\nm{attr-runs} runs of the Directional Gate controller, the largest shares fall on the same two rotation centers in
+every run, and their mean map keeps two compact regions, whereas the split of the values spreads over the whole
+positive cell of the potential.
+
+The example is not an isolated case. \Cref{tab:attribution} reports the split on the field that separates each of the
+ten mission pairs best, where every pair places its whole topological distance on critical points.
 
 \begin{table}[!htb]
 \centering
@@ -568,28 +560,45 @@ share of the two largest extrema, runs where they recur, share kept under $2$\,m
 \tabin{attribution_pairs}
 \end{table}
 
+Across the \nm{attr-runs} runs of the first controller, \nm{attrp-pairs-50} of the ten pairs place their two largest
+extrema on a maximum and a minimum in every single run ($50/50$). Only Directional Gate against XOR Aggregation
+drops to $\nm{attrp-recur-min}/50$, because a single run splits its largest weights across two maxima of the density
+$\rho_\sigma$ rather than pairing the maximum with a minimum. These two extrema carry a larger share of the split
+on the potentials and their coupling than on the density and the kinetic intensity, whose differences spread over more
+critical points.
+
+Under a noise of $2$\,mm, the topological split stays on the same seeds more than that of the values for every pair.
+Two mechanisms explain why the exact-seed score drops to $0.65$--$0.66$ on three pairs: on Homing paired with
+Shelter or XOR Aggregation via kinetic intensity $K_\sigma$, $2$\,mm jitter on nearly resting robots changes the small
+peak value of $K_\sigma$ by up to \nm{attrp-homing-k-change}; on Shelter against XOR Aggregation via
+$\varphi_\sigma$, critical seeds shift locally between neighboring vertices while \nm{attrp-sx-blur} of the
+topological weight stays within one footprint width $\sigma$. A difference between two behaviors is thus named by
+the structures that carry it and located on the robots that shaped them.
+
+\FloatBarrier
 \subsection{What each part of the method contributes}
 \label{sec:res_why}\label{sec:res_compare}\label{sec:res_robust}
 
 The four components rest on three parts of the method: the fields, the reading of several scales together and the
 topology of the fields. Removing each in turn shows what it contributes. No field separates the missions without error
 on its own: each alone misassigns runs at every one of the $990$ settings of the ten datasets, and the five together
-reach the highest purity and the most settings without any misassigned run (\cref{fig:ablation}). The density is the
-only field to which a robot at rest contributes, the other four vanishing with its velocity, and without it the settings
-without error fall from \nm{abl-all-errfree} to \nm{abl-KphipsiJ-errfree}. The coupling adds what the separate diagrams
-of the two potentials miss, where the flux converges relative to where it turns: with it, Top-1 has
-\nm{abl-top1-all-errfree} settings without any misassigned run instead of \nm{abl-top1-noJ-errfree}, and the number of
-behaviors never decreases when controllers are added. Their median ARI notches in \cref{fig:ablation} overlap
-(\nm{abl-all-ari-median} against \nm{abl-noJ-ari-median}), because without the coupling some pooled settings merge
-sub-behaviors into fewer groups against the five missions.
+reach the highest purity and the most settings without any misassigned run (\cref{fig:ablation}).
 
-\begin{figure}[!t]
+\begin{figure}[!htb]
 \centering
 \figin{\linewidth}{figures/fig_ablation.pdf}
 \caption{Field ablation over the $99$ settings of the ten datasets: purity and ARI of each combination of fields, with
 the median and, for purity, the number of the $990$ settings without any misassigned run.}
 \label{fig:ablation}
 \end{figure}
+
+The density is the only field to which a robot at rest contributes, the other four vanishing with its velocity, and
+without it the settings without error fall from \nm{abl-all-errfree} to \nm{abl-KphipsiJ-errfree}. The coupling adds
+what the separate diagrams of the two potentials miss, where the flux converges relative to where it turns: with it,
+Top-1 has \nm{abl-top1-all-errfree} settings without any misassigned run instead of \nm{abl-top1-noJ-errfree}, and the
+number of behaviors never decreases when controllers are added. Their median ARI notches in \cref{fig:ablation} overlap
+(\nm{abl-all-ari-median} against \nm{abl-noJ-ari-median}), because without the coupling some pooled settings merge
+sub-behaviors into fewer groups against the five missions.
 
 To isolate what the representation contributes, other descriptions of the runs are clustered with the same fusion,
 affinity propagation and modal consensus. One summarizes each run by the means and the deviations of four order
@@ -600,11 +609,19 @@ which isolates what the topology adds. Two distributions are compared by the mea
 $\nm{n-quantiles}$ evenly spaced quantiles, an estimate of the Wasserstein distance of order one on the line, so that
 the two summaries are compared at the same order. Top-1 is also the dataset that the earlier study grouped into five
 clusters. From the confusion matrix it reports, with $50$ runs per mission, we recover the counts of that partition and
-score it as ours.
+score it alongside the other descriptions in \cref{tab:baselines} (and \cref{tab:baselines_full} for Top-10).
 
-The descriptions built without the fields fall short (\cref{tab:baselines}, and
-\cref{tab:baselines_full} for all the runs). Order parameters, which average the motion over the whole group, mix
-Directional Gate with Foraging and split XOR Aggregation, and CROCKER curves, which see where the robots are but not how
+\begin{table}[!htb]
+\centering
+\caption{Descriptions of the $250$ runs of Top-1 under the same fusion, affinity propagation and modal consensus (Top-10
+in \cref{tab:baselines_full}); the method is shaded. $^{*}$Partition published for the same runs, with five fixed
+clusters \citep{legarda2026universal}.}
+\label{tab:baselines}
+\tabin{baselines_top1}
+\end{table}
+
+The descriptions built without the fields fall short. Order parameters, which average the motion over the whole group,
+mix Directional Gate with Foraging and split XOR Aggregation, and CROCKER curves, which see where the robots are but not how
 they move, place all Foraging runs with Directional Gate. Neither leaves a single one of the $99$
 settings without a misassigned run, where the fields leave \nm{base-ours-top1-free}. Reading the scales together matters as well: without
 diffusion, the fields split Top-1 into \nm{base-single-top1-cmin} to \nm{base-single-top1-cmax} nearly pure groups,
@@ -616,15 +633,6 @@ against \nm{base-fieldstat-top10-comp}) and ARI (\nm{base-ours-top10-ari} agains
 \cref{tab:baselines_full}). Combining diagrams with values yields \nm{base-combined-top10-free} error-free settings out
 of $99$. Above all, only the diagrams split the distance over the critical structures and the robots that carry it
 (\cref{sec:res_attribution}).
-
-\begin{table}[!t]
-\centering
-\caption{Descriptions of the $250$ runs of Top-1 under the same fusion, affinity propagation and modal consensus (Top-10
-in \cref{tab:baselines_full}); the method is shaded. $^{*}$Partition published for the same runs, with five fixed
-clusters \citep{legarda2026universal}.}
-\label{tab:baselines}
-\tabin{baselines_top1}
-\end{table}
 
 The taxonomy is also stable. It does not depend on what it should ignore: rotating the scene changes the diagrams far
 less than two runs of the same mission differ (\cref{app:invariance}). Nor does it depend on the details of its
