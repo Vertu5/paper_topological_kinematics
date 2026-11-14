@@ -6,6 +6,8 @@
 
 From tracked 2-D positions alone—with no labels, task objectives, or fixed cluster count—this work recovers an **unsupervised behavioral taxonomy** of swarm recordings: five $\mathrm{SO}(2)$-invariant Gaussian-splatted fields ($\rho, K, \varphi, \psi, J$) evaluated on grid-free seeds, summarized by extended persistence, compared via sliced Wasserstein distance ($\mathrm{SW}_1$), fused across four data-driven scales by Similarity Network Fusion (SNF), and clustered via Affinity Propagation (`Purity 0.999–1.000` across `250–2,500` runs). Because the entire chain is differentiable, any distance traces directly back to critical field structures and individual robots.
 
+📄 **Paper:** [`manuscript/paper.pdf`](manuscript/paper.pdf) (full arXiv with appendices) · [`manuscript/journal.pdf`](manuscript/journal.pdf) + [`manuscript/supplementary.pdf`](manuscript/supplementary.pdf)
+
 ![Gaussian Splatting Footprint Intuition Demo](assets/gaussian_splatting_demo.gif)
 
 ---

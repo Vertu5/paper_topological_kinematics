@@ -46,19 +46,17 @@ def _fig_to_pil(fig, dpi=105):
 
 
 def _save_gif(frames, out_path, fps=12, durations_ms=None, colors=256):
-    """Quantize with a shared global palette to avoid flicker and keep file sizes compact for GitHub."""
+    """Quantize with a shared global palette and zero text dithering so titles and labels stay razor-sharp."""
     if not frames:
         raise ValueError("No frames to save")
     w, h = frames[0].size
-    # Sample evenly across frames and downsample mosaic to build a fast representative 256-color palette
     step = max(1, len(frames) // 10)
     sample_frames = frames[::step][:10]
-    sw, sh = max(1, w // 2), max(1, h // 2)
-    sheet = Image.new("RGB", (sw, sh * len(sample_frames)))
+    sheet = Image.new("RGB", (w, h * len(sample_frames)))
     for idx, fr in enumerate(sample_frames):
-        sheet.paste(fr.resize((sw, sh), Image.Resampling.BILINEAR), (0, idx * sh))
-    palette_img = sheet.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
-    pal_frames = [fr.quantize(palette=palette_img, dither=Image.Dither.FLOYDSTEINBERG) for fr in frames]
+        sheet.paste(fr, (0, idx * h))
+    palette_img = sheet.quantize(colors=colors, method=Image.Quantize.MAXCOVERAGE, kmeans=1)
+    pal_frames = [fr.quantize(palette=palette_img, dither=Image.Dither.NONE) for fr in frames]
     dur = durations_ms if durations_ms is not None else int(round(1000 / fps))
     pal_frames[0].save(
         out_path,
@@ -333,14 +331,20 @@ def make_swarm_fields_gif():
     cmap_seq = L.SEQ.copy(); cmap_seq.set_bad("white")
     cmap_div = L.DIV.copy(); cmap_div.set_bad("white")
 
-    fig = plt.figure(figsize=(13.5, 8.2), facecolor="white")
-    gs = fig.add_gridspec(3, 5, hspace=0.14, wspace=0.08, left=0.075, right=0.975, top=0.87, bottom=0.08)
+    fig = plt.figure(figsize=(13.5, 8.4), facecolor="white")
+    gs = fig.add_gridspec(3, 5, hspace=0.14, wspace=0.08, left=0.075, right=0.975, top=0.835, bottom=0.08)
 
     fig.suptitle(
         r"From Live Swarm Trajectories to Time-Averaged Invariant Fields (Top-1 Exemplars, $\sigma_3 = 7.18$ cm)",
-        fontsize=13.5, fontweight="bold", y=0.96, color=L.INK,
+        fontsize=13.5, fontweight="bold", y=0.962, color=L.INK,
+    )
+    fig.text(
+        0.5, 0.912,
+        r"20 e-puck robots   ·   5 missions   ·   120 s (1,200 frames)   ·   closed-form density $\rho_\sigma$ & vorticity potential $\psi_\sigma$",
+        ha="center", va="center", fontsize=10.8, fontweight="bold", color=L.INK,
     )
     row_titles = ["Trajectories\n& robots", r"Density  $\rho_\sigma$", r"Vorticity  $\psi_\sigma$"]
+    hdr_cols = ["#184f95", "#c24918", "#0d6e52", "#9a5b00", "#9e2a2b"]
 
     track_lines, robot_scats, im_rhos, im_psis = [], [], [], []
     for m in range(5):
@@ -351,12 +355,12 @@ def make_swarm_fields_gif():
         ax0.plot(ax_ring_x, ax_ring_y, color="#8a8984", lw=0.9, zorder=1)
         m_lines = []
         for a_i in range(n_agents):
-            ln, = ax0.plot([], [], color=L.MCOL[m], lw=1.05, alpha=0.82, zorder=2)
+            ln, = ax0.plot([], [], color=L.MCOL[m], lw=1.15, alpha=0.88, zorder=2)
             m_lines.append(ln)
-        sc = ax0.scatter([], [], s=20, fc=L.INK, ec="white", lw=0.6, zorder=5)
+        sc = ax0.scatter([], [], s=22, fc=L.INK, ec="white", lw=0.6, zorder=5)
         track_lines.append(m_lines)
         robot_scats.append(sc)
-        ax0.set_title(L.MSHORT[m], fontsize=12, fontweight="bold", color=L.MCOL[m], pad=6)
+        ax0.set_title(L.MSHORT[m], fontsize=12.5, fontweight="bold", color=hdr_cols[m], pad=7)
 
         im_r = ax1.imshow(np.zeros((g_n, g_n)), origin="lower", extent=[0, L.ARENA, 0, L.ARENA],
                           cmap=cmap_seq, vmin=0.0, vmax=rho_vmax[m], interpolation="bilinear")
@@ -374,7 +378,7 @@ def make_swarm_fields_gif():
             for sp in ax.spines.values():
                 sp.set_visible(False)
             if m == 0:
-                ax.set_ylabel(row_titles[r_i], fontsize=11, fontweight="bold", labelpad=8, color=L.INK)
+                ax.set_ylabel(row_titles[r_i], fontsize=11.5, fontweight="bold", labelpad=8, color=L.INK)
 
     foot_txt = fig.text(
         0.5, 0.025, "", ha="center", va="center", fontsize=11, fontweight="bold", color=L.INK,
@@ -403,7 +407,7 @@ def make_swarm_fields_gif():
             foot_txt.set_text(
                 "Settled 120 s fields  —  Notice counter-rotating ψ lobes in D-Gate vs single vortex in Foraging & twin patches in XOR"
             )
-        frames.append(_fig_to_pil(fig, dpi=88))
+        frames.append(_fig_to_pil(fig, dpi=100))
 
     plt.close(fig)
     _save_gif(frames, ASSETS / "swarm_kinematic_fields.gif", fps=8, colors=256)
@@ -603,7 +607,7 @@ def make_phase_diagrams_gif():
         r"Phase Diagrams Across Resolutions & Dataset Sizes (Top-1 $\rightarrow$ Top-10)",
         fontsize=13.5, fontweight="bold", y=0.96, color=L.INK,
     )
-    subtitle_txt = fig.text(0.5, 0.885, "", ha="center", va="center", fontsize=10.5, color=L.INK2, fontweight="bold")
+    subtitle_txt = fig.text(0.5, 0.885, "", ha="center", va="center", fontsize=10.8, color=L.INK, fontweight="bold")
 
     # Shared bottom legend for phase diagram
     pnames = {
@@ -624,7 +628,7 @@ def make_phase_diagrams_gif():
     ]
     fig.legend(
         handles=leg_h, loc="lower center", ncol=3, frameon=True,
-        facecolor="#faf9f6", edgecolor="#d4d3ca", fontsize=8.4,
+        facecolor="#faf9f6", edgecolor="#d4d3ca", fontsize=8.8,
         bbox_to_anchor=(0.5, 0.015), handlelength=1.4, columnspacing=1.2, handletextpad=0.45,
     )
 
@@ -735,7 +739,7 @@ def make_phase_diagrams_gif():
         ax_exp.tick_params(labelsize=8.2); L.bold_ticks(ax_exp)
 
         n_hold = 12 if cur_n == 10 else 5
-        fr = _fig_to_pil(fig, dpi=96)
+        fr = _fig_to_pil(fig, dpi=102)
         for _ in range(n_hold):
             frames.append(fr)
 
@@ -828,7 +832,7 @@ def make_attribution_gif():
         f"D-Gate (run {gA}) vs Foraging (run {gB}) on vorticity $\\psi_{{\\sigma_3}}$ ($\\sigma_3 = 7.18$ cm)"
         f"   ·   $d_{{\\mathrm{{SW}}_1}} = {A['persistence_distance']:.4f}$"
         f"   ·   100% on 49 critical seeds",
-        ha="center", va="center", fontsize=10.2, color=L.INK2,
+        ha="center", va="center", fontsize=10.8, fontweight="bold", color=L.INK,
     )
 
     # ---- Panel (a) static base: persistence diagrams ----
