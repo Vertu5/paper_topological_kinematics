@@ -9,59 +9,115 @@
 # Usage: bash make_submission_bundle.sh   ->  submission/ and submission.zip (both git-ignored)
 set -euo pipefail
 cd "$(dirname "$0")"
-OUT=submission; rm -rf "$OUT" submission.zip; mkdir -p "$OUT"
+OUT=submission; SUP_TMP=$(mktemp -d); rm -rf "$OUT" submission.zip; mkdir -p "$OUT"
+trap 'rm -rf "$SUP_TMP"' EXIT
 M=manuscript
-( cd $M && latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex > /dev/null )   # fresh .aux and .bbl
-python3 - "$OUT" <<'EOF'
+( cd $M && bash build.sh > /dev/null )   # fresh paper, journal and supplementary (.pdf, .aux, .bbl)
+
+python3 - "$OUT" "$SUP_TMP" <<'EOF'
 import re, shutil, sys
 from pathlib import Path
-out, M = Path(sys.argv[1]), Path("manuscript")
-tex = (M / "paper.tex").read_text()
-# sections and tables inserted in place, so that the manuscript is a single file
-tex = re.sub(r"\\input\{sections/([^}]+)\}", lambda m: (M / "sections" / (m.group(1) + ".tex")).read_text(), tex)
-tex = re.sub(r"\\tabin\{([^}]+)\}", lambda m: (M / "tables" / (m.group(1) + ".tex")).read_text().rstrip("\n"), tex)
-# numbers of the results: the generated file sits next to the manuscript
-shutil.copy(M / "numbers.tex", out / "numbers.tex")
-# figures renamed after their number in the article, read from the compiled .aux
-aux = (M / "paper.aux").read_text()
-num = {lab: n for lab, n in re.findall(r"\\newlabel\{(fig:[^}]+)\}\{\{([^}]*)\}", aux)}
-def rename(m):
-    width, path = m.group(1), m.group(2)
-    block_start = tex.rfind("\\begin{figure}", 0, m.start())
-    lab = re.search(r"\\label\{(fig:[^}]+)\}", tex[m.start():tex.find("\\end{figure}", m.start())])
-    name = f"Fig{num[lab.group(1)]}" if lab else Path(path).stem
-    shutil.copy(M / path, out / f"{name}.pdf")
-    return "\\figin{" + width + "}{" + name + ".pdf}"
-tex = re.sub(r"\\figin\{([^}]*)\}\{(figures/[^}]+\.pdf)\}", rename, tex)
-(out / "manuscript.tex").write_text(tex)
-for f in ("sn-jnl.cls", "sn-apacite.bst", "references.bib"):
-    shutil.copy(M / f, out / f)
-shutil.copy(M / "paper.bbl", out / "manuscript.bbl")
-print(sorted(p.name for p in out.iterdir()))
+
+out, sup_out, M = Path(sys.argv[1]), Path(sys.argv[2]), Path("manuscript")
+
+def inline_inputs(tex: str) -> str:
+    tex = re.sub(r"\\input\{preamble\}", lambda _: (M / "preamble.tex").read_text(), tex)
+    # expand nested \input{sections/...} recursively (appendix_body includes the three appendices)
+    while re.search(r"\\input\{sections/([^}]+)\}", tex):
+        tex = re.sub(r"\\input\{sections/([^}]+)\}", lambda m: (M / "sections" / f"{m.group(1)}.tex").read_text(), tex)
+    tex = re.sub(r"\\tabin\{([^}]+)\}", lambda m: (M / "tables" / f"{m.group(1)}.tex").read_text().rstrip("\n"), tex)
+    return tex
+
+def rewrite_figures(tex: str, aux_text: str, dest: Path) -> str:
+    num = {lab: n for lab, n in re.findall(r"\\newlabel\{(fig:[^}]+)\}\{\{([^}]*)\}", aux_text)}
+    def rename(m):
+        width, path = m.group(1), m.group(2)
+        lab = re.search(r"\\label\{(fig:[^}]+)\}", tex[m.start():tex.find("\\end{figure}", m.start())])
+        name = f"Fig{num[lab.group(1)]}" if lab else Path(path).stem
+        shutil.copy(M / path, dest / f"{name}.pdf")
+        return "\\figin{" + width + "}{" + name + ".pdf}"
+    return re.sub(r"\\figin\{([^}]*)\}\{(figures/[^}]+\.pdf)\}", rename, tex)
+
+def inject_xr_fallback(tex: str, other_name: str, other_aux: Path) -> str:
+    labels = "\n".join(re.findall(r"^\\newlabel\{.*$", other_aux.read_text(), re.M))
+    replacement = (
+        "\\makeatletter\n"
+        f"\\IfFileExists{{{other_name}.aux}}{{\\externaldocument[][nocite]{{{other_name}}}[]}}{{%\n"
+        f"{labels}\n"
+        "}\n"
+        "\\makeatother"
+    )
+    return tex.replace(f"\\externaldocument[][nocite]{{{other_name}}}[]", replacement, 1)
+
+def prepare_doc(tex_src: str, aux_src: Path, bbl_src: Path, dest: Path, doc_name: str,
+                other_name: str, other_aux: Path) -> list[str]:
+    tex = inline_inputs(tex_src)
+    tex = rewrite_figures(tex, aux_src.read_text(), dest)
+    tex = inject_xr_fallback(tex, other_name, other_aux)
+    (dest / f"{doc_name}.tex").write_text(tex)
+    shutil.copy(M / "numbers.tex", dest / "numbers.tex")
+    for f in ("sn-jnl.cls", "sn-apacite.bst", "references.bib"):
+        shutil.copy(M / f, dest / f)
+    shutil.copy(bbl_src, dest / f"{doc_name}.bbl")
+    return sorted(p.name for p in dest.iterdir())
+
+# Main manuscript (journal.tex + paper.tex without the appendices block)
+paper_body = (M / "paper.tex").read_text()
+paper_body = re.sub(r"\\ifdefined\\journalversion\\else.*?\\fi\s*", "", paper_body, count=1, flags=re.S)
+paper_body = paper_body.replace("\\ifdefined\\journalversion\\externaldocument[][nocite]{supplementary}[]\\fi", "\\externaldocument[][nocite]{supplementary}[]")
+journal_src = "\\def\\journalversion{}\n\\RequirePackage{xr-hyper}\n" + paper_body
+main_files = prepare_doc(journal_src, M / "journal.aux", M / "journal.bbl", out, "manuscript", "supplementary", M / "supplementary.aux")
+
+# Supplementary Information source package
+sup_files = prepare_doc((M / "supplementary.tex").read_text(), M / "supplementary.aux", M / "supplementary.bbl", sup_out, "supplementary", "journal", M / "journal.aux")
+
+print("main files:", main_files)
+print("supplementary files:", sup_files)
 EOF
-# compile the folder alone, as the submission system will
-( cd "$OUT" && for i in 1 2 3; do pdflatex -interaction=nonstopmode manuscript.tex > /dev/null 2>&1; done ) \
-  || { echo "COMPILATION FAILED in $OUT"; exit 1; }
-errors=$(python3 -c "print(sum(l.startswith('! ') for l in open('$OUT/manuscript.log', encoding='latin-1')))")
-echo "manuscript: $(pdfinfo $OUT/manuscript.pdf | awk '/^Pages/{print $2}') pages, $errors LaTeX errors"
-# once the folder is known to give the text of the paper, its reference PDF is the paper itself, byte for byte
-if [ "$(pdftotext $OUT/manuscript.pdf - 2>/dev/null | md5sum)" = "$(pdftotext $M/paper.pdf - 2>/dev/null | md5sum)" ]; then
-  cp $M/paper.pdf $OUT/manuscript.pdf
-else
-  echo "the folder compiles to another text than $M/paper.pdf"; exit 1
-fi
-if [ -f $M/cover_letter.tex ]; then
-  ( cd $M && pdflatex -interaction=nonstopmode cover_letter.tex > /dev/null 2>&1 && mv cover_letter.pdf ../$OUT/ ) || echo "cover letter not built"
-  if pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | grep -q 'identifier to add'; then
+
+verify_compile() {
+  local dir="$1" stem="$2" ref_pdf="$3"
+  ( cd "$dir" && for _ in 1 2 3; do pdflatex -interaction=nonstopmode "${stem}.tex" > /dev/null 2>&1; done ) \
+    || { echo "COMPILATION FAILED in $dir/${stem}.tex"; exit 1; }
+  local errors undef
+  errors=$(python3 -c "print(sum(l.startswith('! ') for l in open('$dir/${stem}.log', encoding='latin-1')))")
+  undef=$(grep -cE 'undefined|multiply defined' "$dir/${stem}.log" || true)
+  echo "${stem}: $(pdfinfo "$dir/${stem}.pdf" | awk '/^Pages/{print $2}') pages, $errors LaTeX errors, $undef unresolved refs"
+  if [ "$errors" != 0 ] || [ "$undef" != 0 ]; then
+    echo "COMPILATION WARNINGS/ERRORS in $dir/${stem}.log"; exit 1
+  fi
+  if [ "$(pdftotext "$dir/${stem}.pdf" - 2>/dev/null | md5sum)" = "$(pdftotext "$ref_pdf" - 2>/dev/null | md5sum)" ]; then
+    cp "$ref_pdf" "$dir/${stem}.pdf"
+  else
+    echo "the standalone folder compiles to another text than $ref_pdf"; exit 1
+  fi
+  rm -f "$dir"/*.aux "$dir"/*.log "$dir"/*.out "$dir"/*.blg
+}
+
+# compile both independently in clean folders without .aux files, as a journal build server will
+verify_compile "$OUT" manuscript "$M/journal.pdf"
+verify_compile "$SUP_TMP" supplementary "$M/supplementary.pdf"
+
+# zip ONLY the main manuscript package into submission.zip
+( cd "$OUT" && zip -q -r ../submission.zip . )
+
+# copy companion deliverables alongside submission.zip inside submission/
+cp "$M/supplementary.pdf" "$OUT/supplementary.pdf"
+( cd "$SUP_TMP" && zip -q -r - . ) > "$OUT/supplementary_source.zip"
+
+if [ -f "$M/cover_letter.tex" ]; then
+  ( cd "$M" && pdflatex -interaction=nonstopmode cover_letter.tex > /dev/null 2>&1 && mv cover_letter.pdf "../$OUT/" ) || { echo "cover letter not built"; exit 1; }
+  rm -f "$M/cover_letter.aux" "$M/cover_letter.log" "$M/cover_letter.out"
+  if pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | grep -qE 'identi.*to add'; then
     echo "cover letter: the arXiv identifier is still to add (\\arxivid in $M/cover_letter.tex)"
   fi
   if [ "$(pdfinfo "$OUT/cover_letter.pdf" | awk '/^Pages/{print $2}')" != 1 ]; then
     echo "cover letter: more than one page"
   fi
 fi
-rm -f "$OUT"/*.aux "$OUT"/*.log "$OUT"/*.out "$OUT"/*.blg
-( cd "$OUT" && zip -q -r ../submission.zip . )
+
 git archive --format=zip --prefix=paper_topological_kinematics/ -o "$OUT/ESM_1.zip" HEAD -- . ":(exclude)notebooks" \
-  ":(exclude)CLAUDE.md" ":(exclude)PUBLICATION.md" ":(exclude)manuscript/cover_letter.tex"   # the code, not the working notes
-echo "supplementary material: $(du -h "$OUT/ESM_1.zip" | cut -f1) of code at commit $(git rev-parse --short HEAD)"
-du -sh submission.zip
+  ":(exclude)assets" ":(exclude)manuscript/*.pdf" ":(exclude)CLAUDE.md" ":(exclude)PUBLICATION.md" \
+  ":(exclude)manuscript/cover_letter.tex"   # the code, not duplicate PDFs or working notes
+echo "supplementary code archive: $(du -h "$OUT/ESM_1.zip" | cut -f1) at commit $(git rev-parse --short HEAD)"
+du -sh submission.zip "$OUT/supplementary.pdf" "$OUT/supplementary_source.zip" "$OUT/cover_letter.pdf" "$OUT/ESM_1.zip"

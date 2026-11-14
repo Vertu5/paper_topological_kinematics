@@ -28,7 +28,7 @@ tar -czf "$OUT/figures.tar.gz" $FIGS $(for f in $FIGS; do [ -f "${f%.pdf}.png" ]
 # (manuscript/verify_propositions.py, manuscript/lean); without the text of the paper, the scripts that build its
 # deposits, the notebooks, the working notes and the figures (in figures.tar.gz)
 git archive --format=tar.gz --prefix=paper_topological_kinematics/ -o "$OUT/code.tar.gz" HEAD -- . \
-  ":(exclude)notebooks" ":(exclude)figures" ":(exclude)CLAUDE.md" ":(exclude)PUBLICATION.md" \
+  ":(exclude)notebooks" ":(exclude)figures" ":(exclude)assets" ":(exclude)CLAUDE.md" ":(exclude)PUBLICATION.md" \
   ":(exclude)make_submission_bundle.sh" ":(exclude)make_arxiv_bundle.sh" \
   ":(exclude)manuscript/*.pdf" ":(exclude)manuscript/paper.tex" ":(exclude)manuscript/journal.tex" \
   ":(exclude)manuscript/supplementary.tex" ":(exclude)manuscript/preamble.tex" ":(exclude)manuscript/fig_overview.tex" \
