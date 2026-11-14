@@ -986,6 +986,10 @@ if APS is not None and AT is not None:
     claim("on every pair the topological split keeps more of its weight on the same seeds under a 2 mm noise than the value split",
           all(s_["stab2"][0] > s_["stab2"][1] for s_ in _S))
     _pot = [s_ for s_ in _S if s_["field"] in ("phi", "psi", "J")]; _sca = [s_ for s_ in _S if s_["field"] in ("rho", "K")]
+    put("attrp-pot-min-num", f"{100 * min(s_['top2_share'] for s_ in _pot):.0f}")
+    put("attrp-pot-max", pc(max(s_["top2_share"] for s_ in _pot)))
+    put("attrp-sca-min-num", f"{100 * min(s_['top2_share'] for s_ in _sca):.0f}")
+    put("attrp-sca-max", pc(max(s_["top2_share"] for s_ in _sca)))
     claim("the pairs split on a potential or on the coupling give a larger share to their two largest extrema than those "
           "split on the density or the kinetic intensity",
           min(s_["top2_share"] for s_ in _pot) > max(s_["top2_share"] for s_ in _sca))
@@ -1425,7 +1429,7 @@ rows = [
     ("Complex", "alpha complex truncation", f"squared radius $({CFG.C_ALPHA:g}\\sigma_m)^2$", "design"),
     ("Persistence", "filtration; diagrams", "lower-star, extended; six", "design"),
     ("Distance", "sliced Wasserstein", f"${CFG.N_DIRS}$ distinct directions in $[-\\pi/2,\\pi/2)$", "resolution"),
-    ("", "order", "one (absolute differences), summed over the six diagrams", "design"),
+    ("", "order", "order one (absolute differences), summed over the six diagrams", "design"),
     ("Fusion", "ranks; weights", "mutual, then percentile; $\\tfrac13\\rho$, $\\tfrac13K$, $\\tfrac19\\varphi$, $\\tfrac19\\psi$, $\\tfrac19J$", "design"),
     ("", "SNF", f"across the ${CFG.M_SCALES}$ scale views, $(\\knn,t)$ swept over ${len(_RS.KNNS) * len(_RS.TS)}$ settings", "design"),
     ("AP", "preference", r"median of the entries of $S^\star$ (diagonal set to the largest)", "design"),
