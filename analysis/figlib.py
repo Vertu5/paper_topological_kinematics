@@ -13,7 +13,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import matplotlib
-matplotlib.use("Agg")
+if "ipykernel" not in sys.modules:
+    matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
