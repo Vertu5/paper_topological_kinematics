@@ -3,14 +3,16 @@
 make_readme_visuals.py - animated educational GIFs for the repository README and notebooks
 ============================================================================================
 Generates lightweight, publication-styled animated visualizations grounded directly in Paper 1's
-closed-form equations and real Top-1 exemplar trajectories:
+closed-form equations and real Top-1..Top-10 pipeline outputs:
   1. assets/gaussian_splatting_demo.gif     - Two-robot Gaussian footprint & 2.35*sigma resolution limit
   2. assets/swarm_kinematic_fields.gif      - Live Top-1 exemplar trajectories unfolding into rho_sigma and psi_sigma
   3. assets/extended_persistence_demo.gif   - Sublevel/superlevel sweep -> Extended Persistence Diagram
+  4. assets/phase_diagrams.gif              - Phase diagrams (k_nn/n, t) & transition scaling across Top-1..Top-10
+  5. assets/attribution_to_robots.gif       - Differentiable chain from SW1 diagram -> 49 critical seeds -> robots
 
 Usage:
-    python analysis/make_readme_visuals.py            # build all three GIFs
-    python analysis/make_readme_visuals.py footprint  # build one by name: footprint | swarm | persistence
+    python analysis/make_readme_visuals.py                  # build all five GIFs
+    python analysis/make_readme_visuals.py phase attribution  # build specific GIFs
 """
 import io
 import sys
@@ -540,14 +542,503 @@ def make_persistence_gif():
     _save_gif(frames, ASSETS / "extended_persistence_demo.gif", fps=10, colors=256)
 
 
+# ---------------------------------------------------------------------------
+# 4. Phase Diagrams GIF (Top-1 -> Top-10 resolution phases & scaling law)
+# ---------------------------------------------------------------------------
+def make_phase_diagrams_gif():
+    """Animate phase diagrams across Top-1..Top-10 in normalized (k_nn/n, t) space alongside scaling law."""
+    import make_figures as MF
+    from matplotlib import patheffects as PE
+    from matplotlib.collections import LineCollection
+    from matplotlib.colors import ListedColormap
+    from matplotlib.patches import Patch
+
+    L.style()
+    SS, BEH, maps = MF._wide_maps()
+    tax = L.load_pickle(L.PAPER / "taxonomy.pkl")
+    order = list(SS.STATES)
+    state_cmap = ListedColormap([MF.STATE_COLORS[s] for s in order])
+
+    # Precompute every Top-n phase grid (normalized x = k_nn / n), boundaries, purity=1 contour, transitions
+    FIT = (2, 3, 4, 5, 6, 7)
+    tr = {n: SS.transition(maps[n], BEH) for n in range(1, 11)}
+    c_fit, a_fit = SS.power_law(np.vstack([tr[n] for n in FIT]))
+    per = {n: SS.power_law(tr[n]) for n in range(1, 11)}
+    lo_alpha = min(per[n][1] for n in FIT)
+    hi_alpha = max(per[n][1] for n in FIT)
+
+    panels = {}
+    for n in range(1, 11):
+        d = maps[n]
+        y, ts = np.asarray(d["labels"]), d["ts"]
+        knns = [k for k in d["knns"] if k >= 3]
+        xk = np.array(knns, dtype=float) / n
+        by = {(r["knn"], r["t"]): np.asarray(r["pred"]) for r in d["results"]}
+        S_ = np.array([[order.index(SS.state_of(by[(k, t)], y, BEH)) for k in knns] for t in ts])
+        pure = np.array([[float(all(len(np.unique(y[by[(k, t)] == c])) == 1 for c in np.unique(by[(k, t)])))
+                          for k in knns] for t in ts])
+        dx0 = (xk[1] - xk[0]) / 2.0
+        left_e = max(0.5, xk[0] - dx0)
+        ex = np.r_[left_e, (xk[1:] + xk[:-1]) / 2.0, xk[-1] + (xk[-1] - xk[-2]) / 2.0]
+        et = np.r_[0.5, (np.array(ts[1:]) + np.array(ts[:-1])) / 2.0, ts[-1] + 0.5]
+        seg = [[(ex[j + 1], et[i]), (ex[j + 1], et[i + 1])] for i in range(len(ts)) for j in range(len(xk) - 1)
+               if S_[i, j] != S_[i, j + 1]]
+        seg += [[(ex[j], et[i + 1]), (ex[j + 1], et[i + 1])] for i in range(len(ts) - 1) for j in range(len(xk))
+                if S_[i, j] != S_[i + 1, j]]
+        panels[n] = dict(knns=knns, xk=xk, ts=ts, S_=S_, pure=pure, ex=ex, et=et, seg=seg)
+
+    fig = plt.figure(figsize=(12.6, 5.95), facecolor="white")
+    gs = fig.add_gridspec(
+        2, 2,
+        width_ratios=[1.22, 1.0],
+        height_ratios=[1.12, 1.0],
+        hspace=0.36, wspace=0.25,
+        left=0.06, right=0.97, top=0.815, bottom=0.195,
+    )
+    ax_p = fig.add_subplot(gs[:, 0])
+    ax_law = fig.add_subplot(gs[0, 1])
+    ax_exp = fig.add_subplot(gs[1, 1])
+
+    fig.suptitle(
+        r"Phase Diagrams Across Resolutions & Dataset Sizes (Top-1 $\rightarrow$ Top-10)",
+        fontsize=13.5, fontweight="bold", y=0.96, color=L.INK,
+    )
+    subtitle_txt = fig.text(0.5, 0.885, "", ha="center", va="center", fontsize=10.5, color=L.INK2, fontweight="bold")
+
+    # Shared bottom legend for phase diagram
+    pnames = {
+        "finer": "finer than missions",
+        "missions": "the five missions",
+        "partial": "partly merged",
+        "shelter_xor": "Shelter + XOR",
+        "families": "D-Gate + Foraging | Homing | Shelter + XOR",
+        "two_families": "D-Gate + Foraging + Homing | Shelter + XOR",
+    }
+    mk_patch = lambda s: Patch(facecolor=MF.STATE_COLORS[s], hatch="/////" if s == "partial" else None,
+                               edgecolor=L.INK if s == "partial" else MF.STATE_COLORS[s], lw=0.4, label=pnames[s])
+    leg_h = [mk_patch(s) for s in ("finer", "missions", "partial", "shelter_xor", "families", "two_families")]
+    leg_h += [
+        Line2D([], [], color=L.INK, lw=0.9, label="phase transition"),
+        Line2D([], [], color="#184f95", lw=1.2, ls="--", label="edge of purity 1"),
+        Line2D([], [], color=L.INK, lw=1.1, ls=":", label=r"local grid ($k_{\mathrm{nn}},t \leq 25$)"),
+    ]
+    fig.legend(
+        handles=leg_h, loc="lower center", ncol=3, frameon=True,
+        facecolor="#faf9f6", edgecolor="#d4d3ca", fontsize=8.4,
+        bbox_to_anchor=(0.5, 0.015), handlelength=1.4, columnspacing=1.2, handletextpad=0.45,
+    )
+
+    tt_line = np.geomspace(5, 50, 60)
+
+    def _color_of(n):
+        if n == 1:
+            return L.INK
+        return "#184f95" if n in FIT else "#eb6834"
+
+    frames = []
+    for cur_n in range(1, 11):
+        p = panels[cur_n]
+        t_info = tax[cur_n]
+        N_runs = len(t_info["idx"])
+        C_star = int(t_info["C"])
+        n_plat = int(t_info["n_plateau"])
+        pur = float(t_info["purity"])
+        ari = float(t_info["ari"])
+        alpha_cur = per[cur_n][1]
+
+        subtitle_txt.set_text(
+            f"Top-{cur_n}:  {N_runs:,} runs ({5 * cur_n} controllers)   ·   "
+            f"Modal plateau $C^\\star = {C_star}$ ({n_plat}/99)   ·   "
+            f"Purity = {pur:.3f}   ·   ARI = {ari:.3f}"
+        )
+
+        # ---- Left panel: normalized phase diagram ----
+        ax_p.clear()
+        ax_p.pcolormesh(p["ex"], p["et"], p["S_"], cmap=state_cmap, vmin=-0.5, vmax=len(order) - 0.5,
+                        shading="flat", rasterized=True)
+        hatch = np.ma.masked_where(p["S_"] != order.index("partial"), np.ones_like(p["S_"], dtype=float))
+        ax_p.pcolor(p["ex"], p["et"], hatch, hatch="/////", alpha=0.0, shading="flat")
+        ax_p.add_collection(LineCollection(p["seg"], colors=L.INK, linewidths=0.7))
+        if p["pure"].any() and not p["pure"].all():
+            ax_p.contour(p["xk"], p["ts"], p["pure"], levels=[0.5], colors="#184f95", linewidths=1.3, linestyles="--")
+        # Local grid box knn <= 25 -> x <= 25 / cur_n
+        local_x = min(50.5, 25.5 / cur_n)
+        if local_x > p["ex"][0]:
+            ax_p.plot([p["ex"][0], local_x, local_x], [25.5, 25.5, p["et"][0]], color=L.INK, lw=1.25, ls=":")
+        ax_p.set_xlim(0.5, 50.5)
+        ax_p.set_ylim(0.5, 50.5)
+        ax_p.set_xticks([1, 10, 20, 30, 40, 50])
+        ax_p.set_yticks([1, 10, 25, 40, 50])
+        ax_p.set_xlabel(r"Normalized neighborhood size $k_{\mathrm{nn}} / n$   ($k_{\mathrm{nn}} \in ["
+                        + f"{p['knns'][0]}, {p['knns'][-1]}]$)", fontsize=9.8, fontweight="bold")
+        ax_p.set_ylabel(r"Diffusion iterations $t$", fontsize=9.8, fontweight="bold")
+        ax_p.set_title(f"(a) Phase diagram on Top-{cur_n}  (normalized width $k_{{\\mathrm{{nn}}}}/n$)",
+                       loc="left", fontsize=10.5, fontweight="bold", pad=6)
+        ax_p.tick_params(labelsize=8.5); L.bold_ticks(ax_p)
+        for sp in ax_p.spines.values():
+            sp.set_visible(True); sp.set_color("#c8c7c0"); sp.set_linewidth(0.8)
+
+        # ---- Top-right panel: log-log scaling law ----
+        ax_law.clear()
+        for prev_n in range(1, cur_n):
+            Q = tr[prev_n]
+            ax_law.plot(Q[:, 0], Q[:, 1], "o", ms=2.2, color=_color_of(prev_n), alpha=0.22, zorder=2)
+        Q_cur = tr[cur_n]
+        cur_col = _color_of(cur_n)
+        ax_law.plot(
+            Q_cur[:, 0], Q_cur[:, 1], "o", ms=4.3, color=cur_col,
+            mfc=cur_col if cur_n <= 7 else "white", mew=1.2, zorder=5,
+            label=f"Top-{cur_n} transition ($\\alpha = {alpha_cur:.2f}$)",
+        )
+        ax_law.plot(tt_line, c_fit * tt_line ** (-a_fit), color=L.INK, lw=1.3, ls="--", zorder=4,
+                    label=f"Top-2..7 law: ${c_fit:.0f}\\,t^{{-{a_fit:.2f}}}$")
+        ax_law.set_xscale("log"); ax_law.set_yscale("log")
+        ax_law.set_xticks([5, 10, 20, 50]); ax_law.set_xticklabels(["5", "10", "20", "50"])
+        ax_law.set_yticks([10, 20, 50]); ax_law.set_yticklabels(["10", "20", "50"])
+        ax_law.minorticks_off()
+        ax_law.set_xlim(4.5, 56); ax_law.set_ylim(9.5, 78)
+        ax_law.set_xlabel("diffusion $t$", fontsize=9.2, fontweight="bold")
+        ax_law.set_ylabel(r"transition $k_{\mathrm{nn}}/n$", fontsize=9.2, fontweight="bold")
+        ax_law.set_title("(b) Collapse onto one transition law", loc="left", fontsize=10.2, fontweight="bold", pad=5)
+        ax_law.grid(color=L.GRID, lw=0.6); ax_law.set_axisbelow(True)
+        ax_law.tick_params(labelsize=8.2); L.bold_ticks(ax_law)
+        ax_law.legend(loc="upper right", fontsize=8.0, frameon=True, facecolor="white", edgecolor="#deddd6")
+
+        # ---- Bottom-right panel: exponent & atypical shift ----
+        ax_exp.clear()
+        ax_exp.axhspan(lo_alpha, hi_alpha, color="#e8f0fb", zorder=0)
+        ax_exp.text(2.15, lo_alpha - 0.006, "regular Top-2..7 band", fontsize=8.0, color="#184f95", va="top")
+        for m in range(2, cur_n + 1):
+            col = _color_of(m)
+            is_cur = (m == cur_n)
+            ax_exp.plot(
+                m, per[m][1], "o",
+                ms=7.8 if is_cur else 5.2,
+                color=col,
+                mfc=col if m <= 7 else ("white" if not is_cur else "#fde7dc"),
+                mew=1.8 if is_cur else 1.2,
+                zorder=5 if is_cur else 3,
+            )
+        if cur_n >= 2:
+            ms = list(range(2, cur_n + 1))
+            ax_exp.plot(ms, [per[m][1] for m in ms], color="#9b9a94", lw=1.0, zorder=2)
+        if cur_n >= 8:
+            ax_exp.text(9.0, 0.688, "atypical controllers\nsteepen boundary", ha="center", va="bottom",
+                        fontsize=8.0, color="#c24918", fontweight="bold", linespacing=1.05,
+                        path_effects=[PE.withStroke(linewidth=2.5, foreground="white")])
+        ax_exp.set_xticks(range(2, 11)); ax_exp.set_xlim(1.5, 10.5); ax_exp.set_ylim(0.50, 0.725)
+        ax_exp.set_yticks([0.50, 0.55, 0.60, 0.65, 0.70])
+        ax_exp.set_xlabel("Top-$n$ pooled dataset", fontsize=9.2, fontweight="bold")
+        ax_exp.set_ylabel(r"exponent $\alpha_n$", fontsize=9.2, fontweight="bold")
+        ax_exp.set_title("(c) Transition exponent across Top-$n$", loc="left", fontsize=10.2, fontweight="bold", pad=5)
+        ax_exp.grid(color=L.GRID, lw=0.6); ax_exp.set_axisbelow(True)
+        ax_exp.tick_params(labelsize=8.2); L.bold_ticks(ax_exp)
+
+        n_hold = 12 if cur_n == 10 else 5
+        fr = _fig_to_pil(fig, dpi=96)
+        for _ in range(n_hold):
+            frames.append(fr)
+
+    plt.close(fig)
+    _save_gif(frames, ASSETS / "phase_diagrams.gif", fps=8, colors=256)
+
+
+# ---------------------------------------------------------------------------
+# 5. Attribution-to-Robots GIF (SW1 -> 49 Critical Seeds -> Robot Trajectories)
+# ---------------------------------------------------------------------------
+def make_attribution_gif():
+    """Animate backward chain from SW1 distance -> critical seeds -> time-resolved robot gradients."""
+    import attribution as AT
+    import make_figures as MF
+    import torch
+    from matplotlib import patheffects as PE
+    from matplotlib.collections import LineCollection
+    from matplotlib.colors import Normalize
+    from scipy.ndimage import gaussian_filter, uniform_filter1d
+
+    L.style()
+    A = L.load_pickle(L.PAPER / "attribution.pkl")
+    cache = L.load_pickle(L.PAPER / "display_fields.pkl")
+    tracks = L.load_pickle(L.PAPER / "top1_tracks.pkl")
+    eA, gA = A["run_A"]
+    eB, gB = A["run_B"]
+    si = int(A["scale"])
+    field = A["field"]
+    pos = np.asarray(tracks["tracks"][eA]["pos"], np.float64)   # (1199, 20, 2)
+    vel = np.asarray(tracks["tracks"][eA]["vel"], np.float64)
+    P = np.concatenate([pos, pos[-1:] + AT.DT * vel[-1:]], axis=0)  # (1200, 20, 2)
+    F_grid = cache[("ladder", eA, si)][field]
+    domain = np.isfinite(F_grid)
+    S = A["seeds_A"]
+    T_types = A["types_A"]
+    share = A["persistence_share_A"]
+
+    # Diagrams of both compared runs (D-Gate vs Foraging in psi_sigma3)
+    dgmA = [np.asarray(d, np.float64).reshape(-1, 2) for d in
+            L.load_pickle(L.RES / "stage2_alpha_dgms" / f"traj{gA:04d}_s{si}.pkl")["dgms"][field]]
+    dgmB = [np.asarray(d, np.float64).reshape(-1, 2) for d in
+            L.load_pickle(L.RES / "stage2_alpha_dgms" / f"traj{gB:04d}_s{si}.pkl")["dgms"][field]]
+    ptsA_all = np.vstack([d for d in dgmA if len(d)])
+    ptsB_all = np.vstack([d for d in dgmB if len(d)])
+    top_pts = A["points_A"][:14]  # largest diagram points driving SW1 difference
+
+    # Exact differentiable per-(t, robot) attribution via chain rule (match ~1.3e-18 to attribution.pkl)
+    PA_t = torch.tensor(P, dtype=AT.TD, device=AT.DEV)
+    SA_t = torch.tensor(S, dtype=AT.TD, device=AT.DEV)
+    flow = AT.robot_flow(PA_t, SA_t, float(A["sigma"]), share)  # (1200, 20), sums to 1.0
+    if AT.DEV.type == "cuda":
+        torch.cuda.empty_cache()
+
+    # Smooth instantaneous flow per robot & precompute cumulative spatial maps across time checkpoints
+    n_grid = 80
+    rows_idx = np.clip(((np.arange(n_grid) + 0.5) / n_grid * domain.shape[0]).astype(int), 0, domain.shape[0] - 1)
+    inside = domain[np.ix_(rows_idx, rows_idx)]
+    flow_mid = flow[1:-1]                                         # (1198, 20), matching P[1:-1]
+    pts_mid = P[1:-1]
+    flow_smooth = uniform_filter1d(flow_mid, size=11, axis=0, mode="nearest")
+    g_hi = float(np.percentile(flow_smooth, 97.5))
+
+    x_all = pts_mid.reshape(-1, 2)
+    H_all, _, _ = np.histogram2d(x_all[:, 1], x_all[:, 0], bins=n_grid,
+                                 range=[[0, L.ARENA], [0, L.ARENA]], weights=flow_mid.ravel())
+    H_all = gaussian_filter(H_all, 1.5) * inside
+    h_all_max = max(float(H_all[inside].max()), 1e-30)
+
+    def cum_map_scaled(t_end_idx):
+        x = pts_mid[:t_end_idx].reshape(-1, 2)
+        w = flow_mid[:t_end_idx].ravel()
+        H, _, _ = np.histogram2d(x[:, 1], x[:, 0], bins=n_grid, range=[[0, L.ARENA], [0, L.ARENA]], weights=w)
+        H = gaussian_filter(H, 1.5) * inside
+        return np.sqrt(np.clip(H / h_all_max, 0.0, 1.0))
+
+    # Build Figure (3 panels connected left-to-right by chain-rule arrows)
+    fig = plt.figure(figsize=(13.1, 5.25), facecolor="white")
+    gs = fig.add_gridspec(1, 3, width_ratios=[1.0, 1.0, 1.04], wspace=0.28,
+                          left=0.055, right=0.975, top=0.77, bottom=0.205)
+    ax_d = fig.add_subplot(gs[0, 0])
+    ax_s = fig.add_subplot(gs[0, 1])
+    ax_r = fig.add_subplot(gs[0, 2])
+
+    fig.suptitle(
+        r"Differentiable Attribution:  Extended Persistence $\rightarrow$ Critical Seeds $\rightarrow$ Robots",
+        fontsize=13.5, fontweight="bold", y=0.955, color=L.INK,
+    )
+    fig.text(
+        0.5, 0.872,
+        f"D-Gate (run {gA}) vs Foraging (run {gB}) on vorticity $\\psi_{{\\sigma_3}}$ ($\\sigma_3 = 7.18$ cm)"
+        f"   ·   $d_{{\\mathrm{{SW}}_1}} = {A['persistence_distance']:.4f}$"
+        f"   ·   100% on 49 critical seeds",
+        ha="center", va="center", fontsize=10.2, color=L.INK2,
+    )
+
+    # ---- Panel (a) static base: persistence diagrams ----
+    lo, hi = -0.038, 0.042
+    ax_d.plot([lo, hi], [lo, hi], color="#8a8984", lw=1.1, zorder=1)
+    ax_d.scatter(ptsB_all[:, 0], ptsB_all[:, 1], s=26, marker="x", c=L.MCOL[1], lw=1.2, alpha=0.55,
+                 zorder=2, label="Foraging")
+    ax_d.scatter(ptsA_all[:, 0], ptsA_all[:, 1], s=28, marker="o", fc="#8ebcf0", ec=L.MCOL[0], lw=0.7, alpha=0.65,
+                 zorder=3, label="D-Gate")
+    top_xy = np.array([[p["birth"], p["death"]] for p in top_pts])
+    top_sh = np.array([p["share"] for p in top_pts])
+    top_sh_n = top_sh / max(top_sh.max(), 1e-12)
+    sc_diag_hi = ax_d.scatter(top_xy[:, 0], top_xy[:, 1], s=0.0, fc=MF.CRIT_C, ec="white", lw=1.0, zorder=6)
+    ann_ext0 = ax_d.annotate(
+        r"$\mathrm{Ext}_0$" + "\nmin→max",
+        xy=(top_xy[0, 0], top_xy[0, 1]), xytext=(-0.013, 0.032),
+        fontsize=8.2, fontweight="bold", color=MF.CRIT_C, ha="center", va="center",
+        arrowprops=dict(arrowstyle="->", lw=1.0, color=MF.CRIT_C),
+        alpha=0.0, zorder=8,
+    )
+    if ann_ext0.arrow_patch is not None:
+        ann_ext0.arrow_patch.set_alpha(0.0)
+    ax_d.set_xlim(lo, hi); ax_d.set_ylim(lo, hi); ax_d.set_aspect("equal")
+    ax_d.set_xticks([-0.03, 0.0, 0.03]); ax_d.set_yticks([-0.03, 0.0, 0.03])
+    ax_d.tick_params(labelsize=8.0); L.bold_ticks(ax_d)
+    ax_d.set_xlabel("Birth value", fontsize=9.2, fontweight="bold")
+    ax_d.set_ylabel("Death value", fontsize=9.2, fontweight="bold")
+    ax_d.set_title("(a) Diagram split  $d_{\\mathrm{SW}_1}$", loc="left", fontsize=10.2, fontweight="bold", pad=6)
+    diag_leg = [
+        Line2D([], [], ls="", marker="x", ms=5.5, c=L.MCOL[1], mew=1.2, label="Foraging"),
+        Line2D([], [], ls="", marker="o", ms=5.5, mfc="#8ebcf0", mec=L.MCOL[0], mew=0.8, label="D-Gate"),
+        Line2D([], [], ls="", marker="o", ms=6.2, mfc=MF.CRIT_C, mec="white", mew=0.8, label=r"top $\mathrm{SW}_1$ share"),
+    ]
+    ax_d.legend(handles=diag_leg, loc="lower right", fontsize=7.6, frameon=True,
+                facecolor="#faf9f6", edgecolor="#d4d3ca")
+    ax_d.grid(True, color=L.GRID, lw=0.5); ax_d.set_axisbelow(True)
+
+    # ---- Panel (b) static base: vorticity psi + 2,398 seeds + critical splits ----
+    L.show_field(ax_s, F_grid, field)
+    ax_s.scatter(S[:, 0], S[:, 1], s=1.0, c=L.MUTED, lw=0, zorder=3)
+    crit_idx = np.where((share > 0) & np.isin(T_types, ("min", "max", "saddle")))[0]
+    crit_order = crit_idx[np.argsort(share[crit_idx])]
+    crit_s_full = 18.0 + 780.0 * (share[crit_order] / share.sum())
+    crit_scats = []
+    for v in crit_order:
+        sc_k = ax_s.scatter([S[v, 0]], [S[v, 1]], s=0.0, marker=MF.TMARK[str(T_types[v])],
+                            c=MF.CRIT_C, edgecolors="white", linewidths=0.85, zorder=6)
+        crit_scats.append(sc_k)
+    ax_s.set_title(r"(b) Back to critical seeds ($\psi_{\sigma_3}$)", loc="left", fontsize=10.2, fontweight="bold", pad=6)
+
+    # Rotation center callouts (fade in during stage 2)
+    ext_idx = np.where(np.isin(T_types, ("min", "max")))[0]
+    ends = [v for v in ext_idx[np.argsort(share[ext_idx])[-2:]]]
+    rot_anns = []
+    for k, v in enumerate(ends):
+        p_xy = S[v]
+        other = S[ends[1 - k]]
+        away = p_xy - other
+        away = away / np.linalg.norm(away) + np.array([0.85, 0.0])
+        off = 0.56 * away / np.linalg.norm(away)
+        q_xy = np.array([np.clip(p_xy[0] + off[0], 0.35, L.ARENA - 0.38),
+                         np.clip(p_xy[1] + off[1], 0.35, L.ARENA - 0.42)])
+        an = ax_s.annotate(
+            "rotation\ncenter", xy=p_xy, xytext=q_xy, fontsize=8.0, fontweight="bold", color=L.INK,
+            ha="center", va="center", arrowprops=dict(arrowstyle="-", lw=0.85, color=L.INK),
+            path_effects=[PE.withStroke(linewidth=2.8, foreground="white")], alpha=0.0, zorder=8,
+        )
+        if an.arrow_patch is not None:
+            an.arrow_patch.set_alpha(0.0)
+        rot_anns.append(an)
+
+    # ---- Panel (c) base: arena mask + cumulative gradient heatmap + robot trails & live markers ----
+    ax_r.set_xlim(0, L.ARENA); ax_r.set_ylim(0, L.ARENA); ax_r.set_aspect("equal")
+    ax_r.set_xticks([]); ax_r.set_yticks([])
+    for sp in ax_r.spines.values():
+        sp.set_visible(False)
+    th = np.linspace(0, 2 * np.pi, 13)
+    ax_r.plot(L.ARENA / 2 + 1.24 * np.cos(th), L.ARENA / 2 + 1.24 * np.sin(th), color="#9e9d97", lw=0.9, zorder=1)
+    im_rob = ax_r.imshow(
+        np.ma.masked_where(~inside, np.zeros((n_grid, n_grid))),
+        origin="lower", extent=(0, L.ARENA, 0, L.ARENA), cmap=MF.ATTR_CMAP, vmin=0.0, vmax=1.0,
+        interpolation="bilinear", zorder=2,
+    )
+    ax_r.set_title(r"(c) Back to robots ($\partial d / \partial \mathbf{x}_i(t)$)",
+                   loc="left", fontsize=10.2, fontweight="bold", pad=6)
+
+    trail_lcs = []
+    past_lcs = []
+    trail_cmap = MF.ATTR_CMAP
+    trail_norm = Normalize(vmin=0.0, vmax=1.0)
+    for _ in range(pts_mid.shape[1]):
+        pl, = ax_r.plot([], [], color="#78808a", lw=0.40, alpha=0.28, zorder=3)
+        lc = LineCollection([], cmap=trail_cmap, norm=trail_norm, linewidths=1.55, alpha=0.92, zorder=5)
+        ax_r.add_collection(lc)
+        past_lcs.append(pl)
+        trail_lcs.append(lc)
+    rob_scat = ax_r.scatter(pts_mid[0, :, 0], pts_mid[0, :, 1], s=26.0,
+                            c=np.full(pts_mid.shape[1], 0.15), cmap=trail_cmap, vmin=0.0, vmax=1.0,
+                            edgecolors="#78808a", linewidths=0.75, zorder=7)
+
+    # Legend cleanly under Panel (b) & colorbar cleanly under Panel (c)
+    seed_leg = [
+        Line2D([], [], ls="", marker="^", ms=6.2, mfc=MF.CRIT_C, mec="white", label="max"),
+        Line2D([], [], ls="", marker="v", ms=6.2, mfc=MF.CRIT_C, mec="white", label="min"),
+        Line2D([], [], ls="", marker="X", ms=6.2, mfc=MF.CRIT_C, mec="white", label="saddle"),
+    ]
+    ax_s.legend(handles=seed_leg, loc="upper center", bbox_to_anchor=(0.5, -0.025), ncol=3, frameon=False,
+                fontsize=8.2, handletextpad=0.25, columnspacing=0.9)
+
+    fig.canvas.draw()
+    pos_d, pos_s, pos_r = ax_d.get_position(), ax_s.get_position(), ax_r.get_position()
+    cax = fig.add_axes([pos_r.x0 + 0.02, 0.145, pos_r.width - 0.04, 0.024])
+    cb = fig.colorbar(im_rob, cax=cax, orientation="horizontal", ticks=[0, 0.5, 1])
+    L.bold_colorbar(cb, r"gradient attribution (sqrt, max = 1)", size=8.0)
+
+    mid_y = 0.5 * (pos_s.y0 + pos_s.y1)
+    arr_ab = fig.text(0.5 * (pos_d.x1 + pos_s.x0), mid_y, r"$\Longrightarrow$", ha="center", va="center",
+                      fontsize=17, fontweight="bold", color="#d2d0c8")
+    arr_bc = fig.text(0.5 * (pos_s.x1 + pos_r.x0), mid_y, r"$\Longrightarrow$", ha="center", va="center",
+                      fontsize=17, fontweight="bold", color="#d2d0c8")
+    banner = fig.text(
+        0.5, 0.038, "", ha="center", va="center", fontsize=9.8, fontweight="bold", color=L.INK,
+        bbox=dict(facecolor="#f2f1ed", edgecolor="#c3c2b7", boxstyle="round,pad=0.36"),
+    )
+
+    # Precompute 24 trajectory frame indices covering 0..120s
+    t_indices = np.linspace(35, len(pts_mid) - 1, 24, dtype=int)
+
+    frames = []
+    # Stage 1 (8 frames): Persistence diagram split activates
+    for f in range(8):
+        u = (f + 1) / 8.0
+        s = u * u * (3.0 - 2.0 * u)
+        sizes = s * (35.0 + 360.0 * top_sh_n)
+        sc_diag_hi.set_sizes(sizes)
+        ann_ext0.set_alpha(s)
+        if ann_ext0.arrow_patch is not None:
+            ann_ext0.arrow_patch.set_alpha(s)
+        arr_ab.set_color("#c4b5fd" if f < 5 else MF.CRIT_C)
+        banner.set_text(
+            "[1/3] Persistence split:  SW1 distance splits onto top diagram pairs (Ext0 min→max dominates)"
+        )
+        frames.append(_fig_to_pil(fig, dpi=95))
+
+    # Stage 2 (10 frames): 49 critical seeds bloom on psi_sigma3
+    for f in range(10):
+        u = (f + 1) / 10.0
+        s = u * u * (3.0 - 2.0 * u)
+        arr_ab.set_color(MF.CRIT_C)
+        arr_bc.set_color("#c4b5fd" if f < 7 else MF.CRIT_C)
+        for sc_k, target_s in zip(crit_scats, crit_s_full):
+            sc_k.set_sizes([s * target_s])
+        for an in rot_anns:
+            an.set_alpha(s)
+            if an.arrow_patch is not None:
+                an.arrow_patch.set_alpha(s)
+        banner.set_text(
+            "[2/3] Seed back-propagation:  100% of attribution lands on 49 critical extrema & saddles (0% regular)"
+        )
+        frames.append(_fig_to_pil(fig, dpi=95))
+
+    # Stage 3 (24 frames): Robots patrolling 0..120s with live gradient magnitude & cum map
+    for t_end in t_indices:
+        arr_bc.set_color(MF.CRIT_C)
+        secs = int(round(120.0 * t_end / (len(pts_mid) - 1)))
+        M_k = cum_map_scaled(t_end + 1)
+        im_rob.set_data(np.ma.masked_where(~inside, M_k))
+
+        t_start = max(0, t_end - 220)
+        cur_pts = pts_mid[t_end]
+        cur_g = np.clip(flow_smooth[t_end] / max(g_hi, 1e-12), 0.0, 1.0)
+        cur_g_vis = np.sqrt(cur_g)
+        for i in range(pts_mid.shape[1]):
+            past_lcs[i].set_data(pts_mid[:t_end + 1:6, i, 0], pts_mid[:t_end + 1:6, i, 1])
+            pts_i = pts_mid[t_start:t_end + 1:2, i, :]
+            if len(pts_i) >= 2:
+                segs = np.stack([pts_i[:-1], pts_i[1:]], axis=1)
+                g_seg = np.clip(flow_smooth[t_start:t_end + 1:2, i][:-1] / max(g_hi, 1e-12), 0.0, 1.0)
+                trail_lcs[i].set_segments(segs)
+                trail_lcs[i].set_array(np.sqrt(g_seg))
+        rob_scat.set_offsets(cur_pts)
+        rob_scat.set_sizes(22.0 + 130.0 * cur_g_vis)
+        rob_scat.set_array(cur_g_vis)
+
+        banner.set_text(
+            f"[3/3] Gradient back to robots (t = {secs:3d} / 120 s):  "
+            + r"$\partial d / \partial \mathbf{x}_i(t)$ spikes at vortex turns (50% in 13.5% area)"
+        )
+        frames.append(_fig_to_pil(fig, dpi=95))
+
+    # Hold final frame
+    for _ in range(10):
+        frames.append(frames[-1])
+
+    plt.close(fig)
+    _save_gif(frames, ASSETS / "attribution_to_robots.gif", fps=8, colors=256)
+
+
 def main():
-    targets = set(sys.argv[1:]) or {"footprint", "swarm", "persistence"}
+    targets = set(sys.argv[1:]) or {"footprint", "swarm", "persistence", "phase", "attribution"}
     if "footprint" in targets:
         make_footprint_gif()
     if "swarm" in targets:
         make_swarm_fields_gif()
     if "persistence" in targets:
         make_persistence_gif()
+    if "phase" in targets:
+        make_phase_diagrams_gif()
+    if "attribution" in targets:
+        make_attribution_gif()
 
 
 if __name__ == "__main__":
