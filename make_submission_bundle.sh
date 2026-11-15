@@ -38,10 +38,35 @@ def rewrite_figures(tex: str, aux_text: str, dest: Path) -> str:
         return "\\figin{" + width + "}{" + name + ".pdf}"
     return re.sub(r"\\figin\{([^}]*)\}\{(figures/[^}]+\.pdf)\}", rename, tex)
 
+def _normalize_aux_label(line: str) -> str:
+    m = re.match(r"^\\newlabel\{([^}]+@cref)\}\{(.*)\}$", line)
+    if not m:
+        return line
+    key, body = m.group(1), m.group(2)
+    if body.endswith("{}{}{}"):
+        body = body[:-6]
+    return f"\\@ptk@xcref{{{key}}}{{{body}}}"
+
 def inject_xr_fallback(tex: str, other_name: str, other_aux: Path) -> str:
-    labels = "\n".join(re.findall(r"^\\newlabel\{.*$", other_aux.read_text(), re.M))
-    replacement = (
+    raw_labels = re.findall(r"^\\newlabel\{.*$", other_aux.read_text(), re.M)
+    labels = "\n".join(_normalize_aux_label(l) for l in raw_labels)
+    probe = (
         "\\makeatletter\n"
+        "\\newif\\if@ptk@five\n"
+        "\\begingroup\n"
+        "  \\@namedef{r@_ptk_probe@cref}{{X}{}{}{}{}}%\n"
+        "  \\cref@getref{_ptk_probe}{\\@ptk@res}%\n"
+        "  \\def\\@ptk@exp{X}%\n"
+        "  \\ifx\\@ptk@res\\@ptk@exp\\global\\@ptk@fivetrue\\fi\n"
+        "\\endgroup\n"
+        "\\if@ptk@five\n"
+        "  \\def\\@ptk@xcref#1#2{\\newlabel{#1}{#2{}{}{}}}%\n"
+        "\\else\n"
+        "  \\def\\@ptk@xcref#1#2{\\newlabel{#1}{#2}}%\n"
+        "\\fi\n"
+    )
+    replacement = (
+        f"{probe}"
         f"\\IfFileExists{{{other_name}.aux}}{{\\externaldocument[][nocite]{{{other_name}}}[]}}{{%\n"
         f"{labels}\n"
         "}\n"
@@ -111,7 +136,7 @@ if [ -f "$M/cover_letter.tex" ]; then
   if pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | grep -qiE 'identi.*to add|to add|arXiv \('; then
     echo "cover letter: unresolved preprint placeholder in $M/cover_letter.tex"; exit 1
   fi
-  if ! pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | grep -q '10\.5281/zenodo\.24254004'; then
+  if ! pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | tr -d ' \n\r\t' | grep -q '10\.5281/zenodo\.24254004'; then
     echo "cover letter: missing Zenodo preprint DOI (10.5281/zenodo.24254004) in $M/cover_letter.tex"; exit 1
   fi
   if [ "$(pdfinfo "$OUT/cover_letter.pdf" | awk '/^Pages/{print $2}')" != 1 ]; then
