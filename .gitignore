@@ -70,7 +70,7 @@ manuscript/*
 # Zenodo deposit built by make_zenodo_bundle.sh (derived results; never committed)
 zenodo/
 
-# arXiv submission built by make_arxiv_bundle.sh (never committed)
+# Local submission and legacy preprint build artifacts (never committed)
 arxiv/
 arxiv.tar.gz
 submission/

@@ -29,13 +29,13 @@ tar -czf "$OUT/figures.tar.gz" $FIGS $(for f in $FIGS; do [ -f "${f%.pdf}.png" ]
 # deposits, the notebooks, the working notes and the figures (in figures.tar.gz)
 git archive --format=tar.gz --prefix=paper_topological_kinematics/ -o "$OUT/code.tar.gz" HEAD -- . \
   ":(exclude)notebooks" ":(exclude)figures" ":(exclude)assets" ":(exclude)CLAUDE.md" ":(exclude)PUBLICATION.md" \
-  ":(exclude)make_submission_bundle.sh" ":(exclude)make_arxiv_bundle.sh" ":(exclude)manuscript"
+  ":(exclude)make_submission_bundle.sh" ":(exclude)manuscript"
 
 cat > "$OUT/README.md" <<'TXT'
 # Recovering a Taxonomy of Collective Behaviors from Trajectories Alone: code and derived results
 
 Code and derived results of the paper *Recovering a Taxonomy of Collective Behaviors from Trajectories Alone*
-(O. V. Ndinga Oba, 2026). From the tracked positions of a robot swarm, the method recovers an unsupervised taxonomy of
+(O. V. Ndinga Oba, 2026; preprint at https://doi.org/10.5281/zenodo.24254004). From the tracked positions of a robot swarm, the method recovers an unsupervised taxonomy of
 collective behaviors: how many behaviors a set of recordings contains, which recordings share each behavior, one
 exemplar per behavior, how the behaviors group across resolutions, and what in the motion distinguishes them. The code
 matches https://github.com/Vertu5/paper_topological_kinematics at the commit of the paper.
@@ -69,8 +69,10 @@ The code is released under the MIT License (`LICENSE` in `code.tar.gz`), and the
 Commons Attribution 4.0 International (CC BY 4.0) license.
 
 ## How to cite
-O. V. Ndinga Oba, *Recovering a Taxonomy of Collective Behaviors from Trajectories Alone: code and derived results*,
-Zenodo, 2026, doi:10.5281/zenodo.23440748.
+- Code and derived results: O. V. Ndinga Oba, *Recovering a Taxonomy of Collective Behaviors from Trajectories Alone: code and derived results*,
+  Zenodo, 2026, doi:10.5281/zenodo.23440748.
+- Preprint: O. V. Ndinga Oba, *Recovering a Taxonomy of Collective Behaviors from Trajectories Alone*,
+  Zenodo, 2026, doi:10.5281/zenodo.24254004.
 TXT
 ( cd "$OUT" && sha256sum * > SHA256SUMS )
 du -sh "$OUT"/*

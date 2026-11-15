@@ -108,11 +108,14 @@ cp "$M/supplementary.pdf" "$OUT/supplementary.pdf"
 if [ -f "$M/cover_letter.tex" ]; then
   ( cd "$M" && pdflatex -interaction=nonstopmode cover_letter.tex > /dev/null 2>&1 && mv cover_letter.pdf "../$OUT/" ) || { echo "cover letter not built"; exit 1; }
   rm -f "$M/cover_letter.aux" "$M/cover_letter.log" "$M/cover_letter.out"
-  if pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | grep -qE 'identi.*to add'; then
-    echo "cover letter: the arXiv identifier is still to add (\\arxivid in $M/cover_letter.tex)"
+  if pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | grep -qiE 'identi.*to add|to add|arXiv \('; then
+    echo "cover letter: unresolved preprint placeholder in $M/cover_letter.tex"; exit 1
+  fi
+  if ! pdftotext "$OUT/cover_letter.pdf" - 2>/dev/null | grep -q '10\.5281/zenodo\.24254004'; then
+    echo "cover letter: missing Zenodo preprint DOI (10.5281/zenodo.24254004) in $M/cover_letter.tex"; exit 1
   fi
   if [ "$(pdfinfo "$OUT/cover_letter.pdf" | awk '/^Pages/{print $2}')" != 1 ]; then
-    echo "cover letter: more than one page"
+    echo "cover letter: more than one page"; exit 1
   fi
 fi
 
