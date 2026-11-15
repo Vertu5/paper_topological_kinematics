@@ -18,17 +18,6 @@ keywords:
   - similarity network fusion
   - affinity propagation
   - unsupervised behavior discovery
-preferred-citation:
-  type: article
-  title: "Recovering a Taxonomy of Collective Behaviors from Trajectories Alone"
-  authors:
-    - family-names: "Ndinga Oba"
-      given-names: "Olivier Vertu"
-      affiliation: "Université libre de Bruxelles"
-      orcid: "https://orcid.org/0009-0001-3422-2846"
-  year: 2026
-  doi: "10.5281/zenodo.24254004"
-  notes: "Preprint on Zenodo; submitted to Swarm Intelligence."
 references:
   - type: thesis
     title: "Imitation of Swarm Behaviors with Topological Data Analysis in AutoMoDe-Chocolate and IRACE"

@@ -2,12 +2,11 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](requirements.txt)
 [![License: MIT / CC BY 4.0](https://img.shields.io/badge/License-MIT%20%2F%20CC--BY--4.0-yellow.svg)](LICENSE)
-[![Preprint](https://img.shields.io/badge/Preprint-10.5281%2Fzenodo.24254004-green.svg)](https://doi.org/10.5281/zenodo.24254004)
 [![Zenodo](https://img.shields.io/badge/Data%20%26%20Results-10.5281%2Fzenodo.23440748-1f6feb.svg)](https://doi.org/10.5281/zenodo.23440748)
 
 From tracked 2-D positions alone—with no labels, task objectives, or fixed cluster count—this work recovers an **unsupervised behavioral taxonomy** of swarm recordings: five $\mathrm{SO}(2)$-invariant Gaussian-splatted fields ($\rho, K, \varphi, \psi, J$) evaluated on grid-free seeds, summarized by extended persistence, compared via sliced Wasserstein distance ($\mathrm{SW}_1$), fused across four data-driven scales by Similarity Network Fusion (SNF), and clustered via Affinity Propagation (`Purity 0.999–1.000` across `250–2,500` runs). Because the entire chain is differentiable, any distance traces directly back to critical field structures and individual robots.
 
-📄 **Paper:** [`manuscript/paper.pdf`](manuscript/paper.pdf) (Zenodo preprint [`10.5281/zenodo.24254004`](https://doi.org/10.5281/zenodo.24254004), full paper with appendices) · [`manuscript/journal.pdf`](manuscript/journal.pdf) + [`manuscript/supplementary.pdf`](manuscript/supplementary.pdf)
+📄 **Paper:** [`manuscript/paper.pdf`](manuscript/paper.pdf) (full paper with appendices; submitted to *Swarm Intelligence*) · [`manuscript/journal.pdf`](manuscript/journal.pdf) + [`manuscript/supplementary.pdf`](manuscript/supplementary.pdf)
 
 ![Gaussian Splatting Footprint Intuition Demo](assets/gaussian_splatting_demo.gif)
 
@@ -97,7 +96,6 @@ paper_topological_kinematics/
 
 ## Data & License
 
-- **Preprint:** [`manuscript/paper.pdf`](manuscript/paper.pdf), deposited on Zenodo under [`10.5281/zenodo.24254004`](https://doi.org/10.5281/zenodo.24254004) (CC BY 4.0).
 - **Upstream trajectories:** 2,500 simulated ARGoS runs of 20 e-puck robots across five missions (10 AutoMoDe-Chocolate controllers per mission $\times$ 50 seeds) from [Legarda Herranz et al. (2026)](https://github.com/glegarda/swarm-tda) and [Hasselmann et al. (2021)](https://doi.org/10.1038/s41467-021-24642-3).
 - **Derived results & code archive:** [`10.5281/zenodo.23440748`](https://doi.org/10.5281/zenodo.23440748) (`make_zenodo_bundle.sh`).
-- **License:** Code under the **MIT License** ([`LICENSE`](LICENSE)); Zenodo derived results and preprint under **CC BY 4.0**.
+- **License:** Code under the **MIT License** ([`LICENSE`](LICENSE)); Zenodo derived results under **CC BY 4.0**.
